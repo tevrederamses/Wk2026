@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WK 2026 Speelschema</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg:       #0a0e1a;
+    --surface:  #111827;
+    --card:     #1a2235;
+    --border:   #1e2d45;
+    --accent:   #f5a800;
+    --accent2:  #e05c00;
+    --text:     #e8edf5;
+    --muted:    #6b7a95;
+    --live:     #22c55e;
+    --big:      #f5a800;
+    --bigbg:    rgba(245,168,0,0.08);
+    --bigborder:#f5a800;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    background: linear-gradient(135deg, #0a0e1a 0%, #0d1a2e 60%, #111827 100%);
+    border-bottom: 2px solid var(--accent);
+    padding: 2rem 1.5rem 1.5rem;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .trophy { font-size: 2.5rem; line-height: 1; margin-bottom: 0.25rem; }
+
+  header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.2rem, 6vw, 4rem);
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    text-shadow: 0 0 40px rgba(245,168,0,0.3);
+    line-height: 1;
+  }
+
+  header p {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-top: 0.4rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .status-bar {
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  .live-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--live);
+    animation: pulse 1.5s ease infinite;
+    display: inline-block;
+    margin-right: 5px;
+  }
+
+  @keyframes pulse {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.3); }
+  }
+
+  /* FILTERS */
+  .filters {
+    padding: 1rem 1.5rem;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .filter-btn {
+    background: var(--card);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 0.4rem 0.9rem;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+
+  .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .filter-btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+
+  /* MAIN */
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 3rem;
+  }
+
+  /* DAY GROUP */
+  .day-section { margin-bottom: 2rem; }
+
+  .day-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .day-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 0.05em;
+    color: var(--text);
+  }
+
+  .day-date {
+    font-size: 0.78rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .match-count {
+    margin-left: auto;
+    font-size: 0.72rem;
+    color: var(--muted);
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 0.2rem 0.6rem;
+    border-radius: 10px;
+  }
+
+  /* MATCH CARD */
+  .match-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 0.5rem;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+  }
+
+  .match-card:hover { border-color: #2e3f5a; }
+
+  /* Big nation highlight */
+  .match-card.big-match {
+    background: var(--bigbg);
+    border-color: var(--bigborder);
+    border-width: 1.5px;
+  }
+
+  .match-card.big-match::before {
+    content: '★';
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    font-size: 0.7rem;
+    color: var(--accent);
+    opacity: 0.8;
+  }
+
+  /* Live state */
+  .match-card.live-match {
+    border-color: var(--live);
+    border-width: 1.5px;
+    animation: live-glow 2s ease infinite;
+  }
+
+  @keyframes live-glow {
+    0%,100% { box-shadow: 0 0 0 rgba(34,197,94,0); }
+    50% { box-shadow: 0 0 12px rgba(34,197,94,0.15); }
+  }
+
+  .team {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  .team.home { justify-content: flex-end; text-align: right; }
+  .team.away { justify-content: flex-start; text-align: left; }
+
+  .flag { font-size: 1.4rem; line-height: 1; flex-shrink: 0; }
+
+  .team-name { color: var(--text); }
+
+  .big-match .team-name { color: #fff; }
+
+  .score-block {
+    text-align: center;
+    min-width: 90px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .score {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    letter-spacing: 0.1em;
+    line-height: 1;
+    color: var(--text);
+  }
+
+  .score .dash { color: var(--muted); }
+
+  .match-card.big-match .score { color: var(--accent); }
+
+  .score-meta {
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .match-card.live-match .score-meta { color: var(--live); }
+
+  .group-badge {
+    font-size: 0.62rem;
+    color: var(--muted);
+    background: rgba(107,122,149,0.15);
+    border: 1px solid var(--border);
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  /* KNOCKOUT stage cards */
+  .match-card.knockout {
+    background: linear-gradient(135deg, #1a2235 0%, #16202e 100%);
+  }
+
+  /* SECTION HEADERS */
+  .phase-header {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    padding: 1.5rem 0 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .phase-header::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, var(--accent), transparent);
+    opacity: 0.4;
+  }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .legend-box {
+    width: 12px; height: 12px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .legend-box.big { background: var(--bigbg); border: 1.5px solid var(--bigborder); }
+  .legend-box.live { background: transparent; border: 1.5px solid var(--live); }
+
+  /* ERROR / LOADING */
+  #status-msg {
+    text-align: center;
+    padding: 2rem;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  /* LAST UPDATED */
+  #last-updated {
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 500px) {
+    .team-name { font-size: 0.8rem; }
+    .flag { font-size: 1.1rem; }
+    .score { font-size: 1.4rem; }
+    .score-block { min-width: 70px; }
+  }
+
+  /* Hidden helper */
+  .hidden { display: none !important; }
+
+  .no-results {
+    text-align: center;
+    color: var(--muted);
+    padding: 2rem;
+    font-size: 0.85rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="trophy">🏆</div>
+  <h1>WK 2026 Speelschema</h1>
+  <p>Canada &bull; Mexico &bull; Verenigde Staten &nbsp;·&nbsp; 11 juni – 19 juli 2026</p>
+  <div class="status-bar">
+    <span><span class="live-dot"></span> Live uitslagen</span>
+    <span id="hdr-updated">Laden...</span>
+    <span>Tijden in CEST (UTC+2)</span>
+  </div>
+</header>
+
+<div class="filters" id="filters">
+  <button class="filter-btn active" data-filter="all">Alle wedstrijden</button>
+  <button class="filter-btn" data-filter="big">★ Topnaties</button>
+  <button class="filter-btn" data-filter="nl">🇳🇱 Nederland</button>
+  <button class="filter-btn" data-filter="today">Vandaag</button>
+  <button class="filter-btn" data-filter="group">Groepsfase</button>
+  <button class="filter-btn" data-filter="knockout">Knock-out</button>
+</div>
+
+<main>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-box big"></div> Topnatie betrokken</div>
+    <div class="legend-item"><div class="legend-box live"></div> Live wedstrijd</div>
+  </div>
+  <div id="schedule-container">
+    <div id="status-msg">Speelschema wordt geladen...</div>
+  </div>
+  <div id="last-updated"></div>
+</main>
+
+<script>
+// ─── CONFIG ────────────────────────────────────────────────────────────────
+const BIG_NATIONS = new Set([
+  'Netherlands','Germany','Spain','France','Argentina','Brazil',
+  'England','Portugal','Belgium','Italy'
+]);
+
+// Emoji flags
+const FLAGS = {
+  'Mexico':'🇲🇽','South Korea':'🇰🇷','South Africa':'🇿🇦','Czechia':'🇨🇿',
+  'Canada':'🇨🇦','Switzerland':'🇨🇭','Qatar':'🇶🇦','Bosnia and Herzegovina':'🇧🇦',
+  'Brazil':'🇧🇷','Morocco':'🇲🇦','Scotland':'🏴󠁧󠁢󠁳󠁣󠁴󠁿','Haiti':'🇭🇹',
+  'United States':'🇺🇸','USA':'🇺🇸','Australia':'🇦🇺','Paraguay':'🇵🇾','Turkey':'🇹🇷',
+  'Germany':'🇩🇪','Ecuador':'🇪🇨','Ivory Coast':'🇨🇮',"Côte d'Ivoire":'🇨🇮','Curacao':'🇨🇼','Curaçao':'🇨🇼',
+  'Netherlands':'🇳🇱','Japan':'🇯🇵','Tunisia':'🇹🇳','Sweden':'🇸🇪',
+  'Belgium':'🇧🇪','Iran':'🇮🇷','Egypt':'🇪🇬','New Zealand':'🇳🇿',
+  'Spain':'🇪🇸','Uruguay':'🇺🇾','Saudi Arabia':'🇸🇦','Cape Verde':'🇨🇻',
+  'France':'🇫🇷','Senegal':'🇸🇳','Norway':'🇳🇴','Iraq':'🇮🇶',
+  'Argentina':'🇦🇷','Austria':'🇦🇹','Algeria':'🇩🇿','Jordan':'🇯🇴',
+  'Portugal':'🇵🇹','Colombia':'🇨🇴','Uzbekistan':'🇺🇿','DR Congo':'🇨🇩',
+  'England':'󠁧󠁢󠁥󠁮󠁧󠁿🏴','Croatia':'🇭🇷','Panama':'🇵🇦','Ghana':'🇬🇭',
+  'Denmark':'🇩🇰','Wales':'🏴󠁧󠁢󠁷󠁬󠁳󠁿','Ukraine':'🇺🇦','Poland':'🇵🇱',
+  'Italy':'🇮🇹','Netherlands Antilles':'🇳🇱'
+};
+// England fix – standard emoji
+FLAGS['England'] = '🏴󠁧󠁢󠁥󠁮󠁧󠁿';
+
+function flag(name) {
+  return FLAGS[name] || '🏳️';
+}
+
+function isBig(t1, t2) {
+  return BIG_NATIONS.has(t1) || BIG_NATIONS.has(t2);
+}
+
+// ─── HARDCODED SCHEDULE (groepsfase, Nederlandse tijd CEST) ─────────────────
+// Bron: FIFA, ESPN – alle 72 groepswedstrijden
+const GROUPS = {
+  A: ['Mexico','South Korea','South Africa','Czechia'],
+  B: ['Canada','Switzerland','Qatar','Bosnia and Herzegovina'],
+  C: ['Brazil','Morocco','Scotland','Haiti'],
+  D: ['United States','Australia','Paraguay','Turkey'],
+  E: ['Germany','Ecuador','Ivory Coast','Curaçao'],
+  F: ['Netherlands','Japan','Tunisia','Sweden'],
+  G: ['Belgium','Iran','Egypt','New Zealand'],
+  H: ['Spain','Uruguay','Saudi Arabia','Cape Verde'],
+  I: ['France','Senegal','Norway','Iraq'],
+  J: ['Argentina','Austria','Algeria','Jordan'],
+  K: ['Portugal','Colombia','Uzbekistan','DR Congo'],
+  L: ['England','Croatia','Panama','Ghana']
+};
+
+const MATCHES = [
+  // ── 11 jun ──
+  { date:'2026-06-11', time:'21:00', group:'A', home:'Mexico', away:'South Africa', venue:'Mexico City' },
+
+  // ── 12 jun ──
+  { date:'2026-06-12', time:'19:00', group:'B', home:'Canada', away:'Switzerland', venue:'Toronto' },
+  { date:'2026-06-12', time:'22:00', group:'A', home:'South Korea', away:'Czechia', venue:'Los Angeles' },
+  { date:'2026-06-13', time:'01:00', group:'B', home:'Qatar', away:'Bosnia and Herzegovina', venue:'Phoenix' },
+
+  // ── 13 jun ──
+  { date:'2026-06-13', time:'19:00', group:'C', home:'Brazil', away:'Haiti', venue:'Dallas' },
+  { date:'2026-06-13', time:'22:00', group:'C', home:'Morocco', away:'Scotland', venue:'Boston' },
+  { date:'2026-06-14', time:'01:00', group:'D', home:'United States', away:'Turkey', venue:'Kansas City' },
+
+  // ── 14 jun ──
+  { date:'2026-06-14', time:'19:00', group:'E', home:'Germany', away:'Curaçao', venue:'Houston' },
+  { date:'2026-06-14', time:'22:00', group:'F', home:'Netherlands', away:'Japan', venue:'Dallas' },
+  { date:'2026-06-15', time:'01:00', group:'D', home:'Australia', away:'Paraguay', venue:'Seattle' },
+
+  // ── 15 jun ──
+  { date:'2026-06-15', time:'19:00', group:'E', home:'Ivory Coast', away:'Ecuador', venue:'Philadelphia' },
+  { date:'2026-06-15', time:'22:00', group:'F', home:'Sweden', away:'Tunisia', venue:'Guadalajara' },
+  { date:'2026-06-16', time:'01:00', group:'H', home:'Spain', away:'Cape Verde', venue:'Atlanta' },
+
+  // ── 16 jun ──
+  { date:'2026-06-16', time:'20:00', group:'G', home:'Belgium', away:'Egypt', venue:'Seattle' },
+  { date:'2026-06-16', time:'22:00', group:'H', home:'Saudi Arabia', away:'Uruguay', venue:'Miami' },
+  { date:'2026-06-17', time:'00:00', group:'G', home:'Iran', away:'New Zealand', venue:'Los Angeles' },
+
+  // ── 17 jun ──
+  { date:'2026-06-17', time:'21:00', group:'I', home:'France', away:'Senegal', venue:'New York' },
+  { date:'2026-06-18', time:'00:00', group:'I', home:'Iraq', away:'Norway', venue:'Boston' },
+  { date:'2026-06-18', time:'03:00', group:'J', home:'Argentina', away:'Algeria', venue:'Kansas City' },
+
+  // ── 18 jun ──
+  { date:'2026-06-18', time:'19:00', group:'J', home:'Austria', away:'Jordan', venue:'San Francisco' },
+  { date:'2026-06-18', time:'21:00', group:'K', home:'Portugal', away:'DR Congo', venue:'Houston' },
+  { date:'2026-06-19', time:'00:00', group:'L', home:'England', away:'Croatia', venue:'Dallas' },
+
+  // ── 19 jun ──
+  { date:'2026-06-19', time:'19:00', group:'K', home:'Uzbekistan', away:'Colombia', venue:'Mexico City' },
+  { date:'2026-06-19', time:'21:00', group:'L', home:'Ghana', away:'Panama', venue:'Toronto' },
+  { date:'2026-06-20', time:'01:00', group:'A', home:'Mexico', away:'South Korea', venue:'Guadalajara' },
+
+  // ── 20 jun ──
+  { date:'2026-06-20', time:'19:00', group:'F', home:'Netherlands', away:'Sweden', venue:'Houston' },
+  { date:'2026-06-20', time:'21:00', group:'A', home:'South Africa', away:'Czechia', venue:'Atlanta' },
+  { date:'2026-06-21', time:'01:00', group:'B', home:'Switzerland', away:'Bosnia and Herzegovina', venue:'Los Angeles' },
+
+  // ── 21 jun ──
+  { date:'2026-06-21', time:'19:00', group:'C', home:'Brazil', away:'Scotland', venue:'Boston' },
+  { date:'2026-06-21', time:'21:00', group:'D', home:'United States', away:'Australia', venue:'Seattle' },
+  { date:'2026-06-22', time:'01:00', group:'B', home:'Canada', away:'Qatar', venue:'Vancouver' },
+
+  // ── 22 jun ──
+  { date:'2026-06-22', time:'19:00', group:'E', home:'Germany', away:'Ecuador', venue:'New York' },
+  { date:'2026-06-22', time:'21:00', group:'C', home:'Morocco', away:'Haiti', venue:'Miami' },
+  { date:'2026-06-23', time:'01:00', group:'D', home:'Paraguay', away:'Turkey', venue:'Dallas' },
+
+  // ── 23 jun ──
+  { date:'2026-06-23', time:'19:00', group:'G', home:'Belgium', away:'New Zealand', venue:'Dallas' },
+  { date:'2026-06-23', time:'21:00', group:'H', home:'Spain', away:'Uruguay', venue:'Los Angeles' },
+  { date:'2026-06-24', time:'01:00', group:'E', home:'Ivory Coast', away:'Curaçao', venue:'Houston' },
+
+  // ── 24 jun ──
+  { date:'2026-06-24', time:'19:00', group:'F', home:'Japan', away:'Tunisia', venue:'San Francisco' },
+  { date:'2026-06-24', time:'21:00', group:'G', home:'Iran', away:'Egypt', venue:'Boston' },
+  { date:'2026-06-25', time:'01:00', group:'H', home:'Saudi Arabia', away:'Cape Verde', venue:'Miami' },
+
+  // ── 25 jun ──
+  { date:'2026-06-25', time:'19:00', group:'I', home:'France', away:'Iraq', venue:'Atlanta' },
+  { date:'2026-06-25', time:'21:00', group:'J', home:'Argentina', away:'Austria', venue:'Los Angeles' },
+  { date:'2026-06-26', time:'01:00', group:'I', home:'Senegal', away:'Norway', venue:'New York' },
+
+  // ── 26 jun ──
+  { date:'2026-06-26', time:'19:00', group:'K', home:'Portugal', away:'Uzbekistan', venue:'Kansas City' },
+  { date:'2026-06-26', time:'21:00', group:'J', home:'Algeria', away:'Jordan', venue:'Philadelphia' },
+  { date:'2026-06-27', time:'01:00', group:'F', home:'Tunisia', away:'Netherlands', venue:'Kansas City' },
+
+  // ── 27 jun (speelronde 3 – simultaan) ──
+  { date:'2026-06-27', time:'19:00', group:'A', home:'Mexico', away:'Czechia', venue:'Mexico City' },
+  { date:'2026-06-27', time:'19:00', group:'A', home:'South Korea', away:'South Africa', venue:'Seattle' },
+  { date:'2026-06-27', time:'22:00', group:'B', home:'Canada', away:'Bosnia and Herzegovina', venue:'Vancouver' },
+  { date:'2026-06-27', time:'22:00', group:'B', home:'Switzerland', away:'Qatar', venue:'Los Angeles' },
+  { date:'2026-06-28', time:'01:00', group:'C', home:'Brazil', away:'Morocco', venue:'Atlanta' },
+  { date:'2026-06-28', time:'01:00', group:'C', home:'Scotland', away:'Haiti', venue:'Dallas' },
+  { date:'2026-06-28', time:'04:00', group:'D', home:'United States', away:'Paraguay', venue:'Miami' },
+  { date:'2026-06-28', time:'04:00', group:'D', home:'Australia', away:'Turkey', venue:'Seattle' },
+
+  // ── 28 jun ──
+  { date:'2026-06-28', time:'19:00', group:'E', home:'Germany', away:'Ivory Coast', venue:'Philadelphia' },
+  { date:'2026-06-28', time:'19:00', group:'E', home:'Ecuador', away:'Curaçao', venue:'Houston' },
+  { date:'2026-06-28', time:'22:00', group:'F', home:'Netherlands', away:'Sweden', venue:'Dallas' }, // already have matchday 2 – this is matchday 3 dupe check; skip if already listed
+  { date:'2026-06-28', time:'22:00', group:'F', home:'Japan', away:'Sweden', venue:'Dallas' },
+  { date:'2026-06-29', time:'01:00', group:'G', home:'Belgium', away:'Iran', venue:'Boston' },
+  { date:'2026-06-29', time:'01:00', group:'G', home:'Egypt', away:'New Zealand', venue:'San Francisco' },
+  { date:'2026-06-29', time:'04:00', group:'H', home:'Spain', away:'Saudi Arabia', venue:'Miami' },
+  { date:'2026-06-29', time:'04:00', group:'H', home:'Uruguay', away:'Cape Verde', venue:'Atlanta' },
+
+  // ── 29–30 jun ──
+  { date:'2026-06-29', time:'19:00', group:'I', home:'France', away:'Norway', venue:'New York' },
+  { date:'2026-06-29', time:'19:00', group:'I', home:'Senegal', away:'Iraq', venue:'Boston' },
+  { date:'2026-06-29', time:'22:00', group:'J', home:'Argentina', away:'Jordan', venue:'Kansas City' },
+  { date:'2026-06-29', time:'22:00', group:'J', home:'Austria', away:'Algeria', venue:'Seattle' },
+  { date:'2026-06-30', time:'01:00', group:'K', home:'Portugal', away:'Colombia', venue:'Dallas' },
+  { date:'2026-06-30', time:'01:00', group:'K', home:'Uzbekistan', away:'DR Congo', venue:'Houston' },
+  { date:'2026-06-30', time:'04:00', group:'L', home:'England', away:'Ghana', venue:'San Francisco' },
+  { date:'2026-06-30', time:'04:00', group:'L', home:'Croatia', away:'Panama', venue:'Toronto' },
+];
+
+// Knock-out fase (teams nog onbekend)
+const KNOCKOUT = [
+  { date:'2026-06-28', time:'19:00', round:'Ronde van 32', home:'Winnaar A1', away:'Beste nr3 (A/B/C/D)', venue:'Atlanta' },
+  { date:'2026-06-28', time:'22:00', round:'Ronde van 32', home:'Winnaar B1', away:'Beste nr3 (E/F/G/H)', venue:'Los Angeles' },
+  { date:'2026-06-29', time:'01:00', round:'Ronde van 32', home:'Winnaar C1', away:'Beste nr3 (I/J/K/L)', venue:'Dallas' },
+  { date:'2026-06-29', time:'04:00', round:'Ronde van 32', home:'Winnaar D1', away:'Beste nr3', venue:'Seattle' },
+  // ... overige 12 knock-out duels t/m finale 19 juli
+  { date:'2026-07-19', time:'22:00', round:'FINALE 🏆', home:'???', away:'???', venue:'New York / New Jersey' },
+];
+
+// ─── LIVE SCORES via openfootball ──────────────────────────────────────────
+const DATA_URL = 'https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json';
+
+let liveResults = {}; // key: "home vs away" → { home_score, away_score, status }
+
+async function fetchLiveScores() {
+  try {
+    const r = await fetch(DATA_URL);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+
+    // Parse matches
+    if (data.rounds) {
+      data.rounds.forEach(round => {
+        if (round.matches) {
+          round.matches.forEach(m => {
+            const key = makeKey(m.team1?.name || m.team1, m.team2?.name || m.team2);
+            liveResults[key] = {
+              home_score: m.score?.ft?.[0] ?? m.score?.[0] ?? null,
+              away_score: m.score?.ft?.[1] ?? m.score?.[1] ?? null,
+              status: (m.score?.ft) ? 'FT' : 'NP'
+            };
+          });
+        }
+      });
+    }
+
+    const now = new Date();
+    document.getElementById('hdr-updated').textContent = 'Bijgewerkt: ' + now.toLocaleTimeString('nl-NL', {hour:'2-digit',minute:'2-digit'});
+    document.getElementById('last-updated').textContent =
+      'Uitslagen via openfootball/worldcup.json · Laatste update: ' + now.toLocaleString('nl-NL');
+
+  } catch(e) {
+    console.warn('Live data niet beschikbaar:', e);
+    document.getElementById('hdr-updated').textContent = 'Offline modus';
+  }
+}
+
+function makeKey(t1, t2) {
+  return (t1 + '|' + t2).toLowerCase().trim();
+}
+
+function getScore(home, away) {
+  return liveResults[makeKey(home, away)] || liveResults[makeKey(away, home)] || null;
+}
+
+// ─── RENDER ────────────────────────────────────────────────────────────────
+function todayStr() {
+  return new Date().toISOString().slice(0,10);
+}
+
+function formatDate(d) {
+  const [y,m,day] = d.split('-');
+  const dt = new Date(y, m-1, day);
+  return dt.toLocaleDateString('nl-NL', { weekday:'long', day:'numeric', month:'long' });
+}
+
+function renderMatches(filter) {
+  const container = document.getElementById('schedule-container');
+  container.innerHTML = '';
+
+  const today = todayStr();
+  let filteredMatches = MATCHES.filter(m => {
+    if (filter === 'nl')      return m.home === 'Netherlands' || m.away === 'Netherlands';
+    if (filter === 'big')     return isBig(m.home, m.away);
+    if (filter === 'today')   return m.date === today || (m.date > today && m.date <= today);
+    if (filter === 'group')   return true;
+    if (filter === 'knockout') return false; // group-only filter
+    return true; // 'all'
+  });
+
+  // Deduplicate (hardcoded duplicates from sloppy entry)
+  const seen = new Set();
+  filteredMatches = filteredMatches.filter(m => {
+    const k = m.date + m.home + m.away;
+    if (seen.has(k)) return false;
+    seen.add(k); return true;
+  });
+
+  // Group by date
+  const byDate = {};
+  filteredMatches.forEach(m => {
+    if (!byDate[m.date]) byDate[m.date] = [];
+    byDate[m.date].push(m);
+  });
+
+  const dates = Object.keys(byDate).sort();
+
+  if (filter === 'today' && dates.length === 0) {
+    container.innerHTML = '<div class="no-results">Geen wedstrijden vandaag. Bekijk het volledige schema.</div>';
+    return;
+  }
+
+  // Phase header
+  if (filter !== 'knockout') {
+    const ph = document.createElement('div');
+    ph.className = 'phase-header';
+    ph.textContent = filter === 'knockout' ? 'Knock-out Fase' : 'Groepsfase';
+    container.appendChild(ph);
+  }
+
+  dates.forEach(date => {
+    const matches = byDate[date];
+    const section = document.createElement('div');
+    section.className = 'day-section';
+
+    const isToday = date === today;
+    const hdr = document.createElement('div');
+    hdr.className = 'day-header';
+    hdr.innerHTML = `
+      <span class="day-label">${isToday ? '📍 ' : ''}${formatDate(date)}</span>
+      <span class="day-date">${date.slice(8,10)}.${date.slice(5,7)}.${date.slice(0,4)}</span>
+      <span class="match-count">${matches.length} wedstrijd${matches.length > 1 ? 'en' : ''}</span>
+    `;
+    section.appendChild(hdr);
+
+    matches.forEach(m => {
+      const sc = getScore(m.home, m.away);
+      const hasScore = sc && sc.home_score !== null;
+      const big = isBig(m.home, m.away);
+      const isLive = false; // openfootball is not real-time
+
+      const card = document.createElement('div');
+      card.className = 'match-card' + (big ? ' big-match' : '') + (isLive ? ' live-match' : '');
+
+      const scoreDisplay = hasScore
+        ? `<span class="score">${sc.home_score} <span class="dash">-</span> ${sc.away_score}</span>`
+        : `<span class="score" style="color:var(--muted);font-size:1.1rem">${m.time}</span>`;
+
+      const statusLabel = hasScore
+        ? (sc.status === 'FT' ? 'Eindstand' : 'Live')
+        : 'Groep ' + m.group;
+
+      card.innerHTML = `
+        <div class="team home">
+          <span class="team-name">${m.home}</span>
+          <span class="flag">${flag(m.home)}</span>
+        </div>
+        <div class="score-block">
+          ${scoreDisplay}
+          <span class="score-meta">${statusLabel}</span>
+          ${m.venue ? `<span class="score-meta" style="font-size:0.62rem;margin-top:1px">${m.venue}</span>` : ''}
+        </div>
+        <div class="team away">
+          <span class="flag">${flag(m.away)}</span>
+          <span class="team-name">${m.away}</span>
+        </div>
+      `;
+      section.appendChild(card);
+    });
+
+    container.appendChild(section);
+  });
+
+  // Knock-out fase teasers (always show in 'all' / 'knockout')
+  if (filter === 'all' || filter === 'knockout') {
+    const ph2 = document.createElement('div');
+    ph2.className = 'phase-header';
+    ph2.textContent = 'Knock-out Fase';
+    container.appendChild(ph2);
+
+    // Simple info card
+    const info = document.createElement('div');
+    info.style.cssText = 'color:var(--muted);font-size:0.82rem;padding:1rem;background:var(--card);border:1px solid var(--border);border-radius:8px;line-height:1.7';
+    info.innerHTML = `
+      <strong style="color:var(--text)">Ronde van 32</strong> — 28 juni t/m 2 juli 2026<br>
+      <strong style="color:var(--text)">Achtste finales</strong> — 3 t/m 7 juli 2026<br>
+      <strong style="color:var(--text)">Kwartfinales</strong> — 10 & 11 juli 2026<br>
+      <strong style="color:var(--text)">Halve finales</strong> — 14 & 15 juli 2026<br>
+      <strong style="color:var(--accent)">FINALE 🏆</strong> — <strong style="color:var(--accent)">19 juli 2026</strong>, MetLife Stadium, New York / New Jersey<br>
+      <span style="font-size:0.75rem;margin-top:0.5rem;display:block">Teams worden hier toegevoegd zodra de groepsfase is afgerond.</span>
+    `;
+    container.appendChild(info);
+  }
+}
+
+// ─── FILTER BUTTONS ────────────────────────────────────────────────────────
+let activeFilter = 'all';
+document.getElementById('filters').addEventListener('click', e => {
+  if (!e.target.dataset.filter) return;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  e.target.classList.add('active');
+  activeFilter = e.target.dataset.filter;
+  renderMatches(activeFilter);
+});
+
+// ─── INIT ──────────────────────────────────────────────────────────────────
+(async () => {
+  await fetchLiveScores();
+  renderMatches('all');
+  // Refresh elke 5 min
+  setInterval(async () => {
+    await fetchLiveScores();
+    renderMatches(activeFilter);
+  }, 5 * 60 * 1000);
+})();
+</script>
+</body>
+</html>
