@@ -469,8 +469,6 @@ main { max-width: 900px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
     <p style="font-size:0.7rem;letter-spacing:0.12em;opacity:0.6;margin-bottom:0.15rem">Created by Ram6</p>
     <p>Canada &bull; Mexico &bull; Verenigde Staten · 11 juni – 19 juli 2026</p>
     <div class="hdr-meta">
-      <span><span class="live-dot"></span>Live uitslagen</span>
-      <span id="hdr-updated">Laden…</span>
       <span class="hdr-tz">Tijden in Nederlandse tijd (CEST)</span>
       <span id="nl-countdown"></span>
     </div>
@@ -707,14 +705,12 @@ async function fetchScores() {
       });
       source = 'openfootball';
     } catch(e2) {
-      document.getElementById('hdr-updated').textContent = 'Offline modus';
+      // offline
       return;
     }
   }
   const now = new Date();
-  document.getElementById('hdr-updated').textContent =
-    'Bijgewerkt: ' + now.toLocaleTimeString('nl-NL', {hour:'2-digit',minute:'2-digit'});
-  document.getElementById('last-updated').textContent =
+document.getElementById('last-updated').textContent =
     'Uitslagen via ' + source + ' · ' + now.toLocaleString('nl-NL');
 }
 
