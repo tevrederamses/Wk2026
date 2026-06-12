@@ -862,13 +862,19 @@ document.getElementById('filters').addEventListener('click', e => {
   render('all');
   const today = todayStr();
   setTimeout(() => {
+    const d = today.slice(8,10) + '.' + today.slice(5,7);
     const sections = document.querySelectorAll('.day-section');
     for (const sec of sections) {
-      const dateText = sec.querySelector('.day-date')?.textContent || '';
-      const d = today.slice(8,10) + '.' + today.slice(5,7);
-      if (dateText === d) { sec.scrollIntoView({behavior:'smooth', block:'start'}); break; }
+      if ((sec.querySelector('.day-date')?.textContent || '') === d) {
+        const headerH = document.querySelector('header').offsetHeight;
+        const filterH = document.getElementById('filters').offsetHeight;
+        const offset  = headerH + filterH + 12;
+        const top = sec.getBoundingClientRect().top + window.scrollY - offset;
+        window.scrollTo({ top, behavior: 'smooth' });
+        break;
+      }
     }
-  }, 400);
+  }, 600);
   setInterval(async () => { await fetchScores(); render(activeFilter); }, 5 * 60 * 1000);
 })();
 </script>
