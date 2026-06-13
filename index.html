@@ -753,21 +753,33 @@ async function fetchTopScorers() {
     if (!r2.ok) throw new Error();
     const data2 = await r2.json();
     const playerGoals = {};
+    // Bouw team ID → naam lookup
+    const teamIdToName = {};
     (data2.events || []).forEach(ev => {
       const comp = ev.competitions?.[0];
       if (!comp) return;
-      // Zowel afgeronde als lopende wedstrijden meenemen
+      (comp.competitors || []).forEach(c => {
+        if (c.team?.id) teamIdToName[c.team.id] = c.team.displayName || '';
+      });
+    });
+    (data2.events || []).forEach(ev => {
+      const comp = ev.competitions?.[0];
+      if (!comp) return;
       (comp.details || []).forEach(detail => {
         const typeText = (detail.type?.text || detail.type?.name || '').toLowerCase();
-        if (!typeText.includes('goal') || typeText.includes('own')) return;
+        const typeId   = detail.type?.id || '';
+        const isGoal = typeText.includes('goal') || ['70','98','137'].includes(typeId);
+        if (!isGoal || typeText.includes('own') || detail.ownGoal) return;
         const ath = detail.athletesInvolved?.[0];
         if (!ath) return;
+        // Haal teamnaam op via ID lookup
+        const teamName = teamIdToName[detail.team?.id] || ath.team?.displayName || detail.team?.displayName || '';
         const key = ath.id || ath.displayName;
         if (!playerGoals[key]) playerGoals[key] = {
           name: ath.displayName || 'Onbekend',
-          team: detail.team?.displayName || '',
+          team: teamName,
           goals: 0,
-          flag: flagFromCountry(detail.team?.displayName || ''),
+          flag: flagFromCountry(teamName),
         };
         playerGoals[key].goals++;
       });
