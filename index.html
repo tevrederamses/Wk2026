@@ -401,8 +401,13 @@ main { max-width: 900px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
 .sg-table tr.qualify td { background: rgba(255,102,0,0.04); }
 .sg-table tr.qualify td:first-child { border-left: 3px solid var(--accent); padding-left: calc(0.9rem - 3px); }
 .sg-table .pts-cell { font-weight: 700; color: var(--score-col); }
-.sg-table .pos-cell { color: var(--muted); width: 20px; }
-.sg-note { font-size: 0.67rem; color: var(--muted); padding: 0.4rem 0.9rem; }
+.sg-table .pos-cell { color: var(--muted); width: 20px; position: relative; padding-left: 14px; }
+.qualify-dot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent); position: absolute; left: 0; top: 50%;
+  transform: translateY(-50%);
+}
+.sg-note { font-size: 0.67rem; color: var(--muted); padding: 0.4rem 0.9rem; display: flex; align-items: center; }
 
 /* ─── TOPSCORERS ─────────────────────────────────────── */
 .scorers-table-wrap {
@@ -1036,7 +1041,8 @@ function renderStandings() {
       const gd = s.gf - s.ga;
       const tr = document.createElement('tr');
       if (i < 2) tr.className = 'qualify';
-      tr.innerHTML = '<td class="pos-cell">' + (i+1) + '</td>' +
+      const dot = i < 2 ? '<span class="qualify-dot"></span>' : '';
+      tr.innerHTML = '<td class="pos-cell">' + dot + (i+1) + '</td>' +
         '<td><span style="margin-right:4px">' + flag(team) + '</span>' + team + '</td>' +
         '<td>' + s.w + '</td><td>' + s.d + '</td><td>' + s.l + '</td>' +
         '<td>' + s.gf + '</td><td>' + s.ga + '</td>' +
@@ -1048,7 +1054,7 @@ function renderStandings() {
     box.appendChild(table);
     const noteEl = document.createElement('div');
     noteEl.className = 'sg-note';
-    noteEl.textContent = '🟠 = rechtstreeks door · top 8 derde plaatsen ook door';
+    noteEl.innerHTML = '<span class="qualify-dot" style="position:static;display:inline-block;margin-right:4px"></span>rechtstreeks door naar knock-out · top 8 beste nummers 3 ook door';
     box.appendChild(noteEl);
     grid.appendChild(box);
   });
