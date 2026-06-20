@@ -244,8 +244,25 @@ main { max-width: 900px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
 .match-card.nl-match {
   border-color: var(--accent);
   border-width: 2px;
-  background: rgba(255,102,0,0.06);
+  background: var(--accent);
 }
+.match-card.nl-match .team-name,
+.match-card.nl-match .score,
+.match-card.nl-match .score-pending,
+.match-card.nl-match .score-meta,
+.match-card.nl-match .score-city,
+.match-card.nl-match .score-round,
+.match-card.nl-match .day-count {
+  color: #fff;
+}
+.match-card.nl-match .poule-link {
+  color: #fff; border-color: #fff; background: rgba(255,255,255,0.15);
+}
+.match-card.nl-match .poule-link:hover { background: #fff; color: var(--accent); }
+.match-card.nl-match .yt-btn {
+  color: #fff; border-color: #fff; background: rgba(255,255,255,0.15);
+}
+.match-card.nl-match .yt-btn:hover { background: #fff; color: var(--accent); }
 .match-card.nl-match::before {
   content: '🇳🇱'; position: absolute; top: 5px; right: 8px;
   font-size: 0.85rem;
@@ -961,6 +978,7 @@ function matchRound(m) {
 }
 
 function isNL(m)  { return NL.has(m.home)  || NL.has(m.away); }
+function isOranje(m) { return m.home === 'Netherlands' || m.away === 'Netherlands'; }
 function isBig(m) { return BIG.has(m.home) || BIG.has(m.away); }
 
 function calcStandings() {
@@ -1078,6 +1096,7 @@ function render(filter) {
     const matches = byDate[date];
     const sec = document.createElement('div');
     sec.className = 'day-section';
+    sec.dataset.date = date;
     const isToday = date === today;
     sec.innerHTML = '<div class="day-header"><span class="day-label">' + (isToday ? '📍 ' : '') + fmtDate(date) + '</span><span class="day-date">' + date.slice(8,10) + '.' + date.slice(5,7) + '</span><span class="day-count">' + matches.length + ' wedstrijd' + (matches.length > 1 ? 'en' : '') + '</span></div>';
 
@@ -1085,7 +1104,7 @@ function render(filter) {
       const sc = getScore(m.home, m.away);
       const hasScore = Array.isArray(sc);
       const live = isMatchLive(m);
-      const nl   = isNL(m);
+      const nl   = isOranje(m);
       const big  = !nl && isBig(m);
 
       const card = document.createElement('div');
@@ -1324,6 +1343,9 @@ document.getElementById('filters').addEventListener('click', e => {
   btn.classList.add('active');
   activeFilter = btn.dataset.filter;
   render(activeFilter);
+  if (!['standings', 'scorers', 'cards', 'knockout'].includes(activeFilter)) {
+    setTimeout(scrollToRelevantMatch, 60);
+  }
 });
 
 // ─── POULE LINK → SPRING NAAR STANDEN ────────────────
@@ -1351,25 +1373,28 @@ document.getElementById('schedule-container').addEventListener('click', e => {
 });
 
 
+function scrollToRelevantMatch() {
+  const today = todayStr();
+  const sections = Array.from(document.querySelectorAll('.day-section'));
+  if (!sections.length) return;
+
+  // Pak de eerste sectie van vandaag of later; bestaat die niet
+  // (bv. binnen een filter zonder wedstrijden vandaag/later), dan de laatste sectie.
+  let target = sections.find(sec => (sec.dataset.date || '') >= today);
+  if (!target) target = sections[sections.length - 1];
+
+  const headerH = document.querySelector('header').offsetHeight;
+  const filterH = document.getElementById('filters').offsetHeight;
+  const offset  = headerH + filterH + 12;
+  const top = target.getBoundingClientRect().top + window.scrollY - offset;
+  window.scrollTo({ top, behavior: 'smooth' });
+}
+
 (async () => {
   await Promise.all([fetchScores(), fetchTopScorers()]);
   startCountdown();
   render('all');
-  const today = todayStr();
-  setTimeout(() => {
-    const d = today.slice(8,10) + '.' + today.slice(5,7);
-    const sections = document.querySelectorAll('.day-section');
-    for (const sec of sections) {
-      if ((sec.querySelector('.day-date')?.textContent || '') === d) {
-        const headerH = document.querySelector('header').offsetHeight;
-        const filterH = document.getElementById('filters').offsetHeight;
-        const offset  = headerH + filterH + 12;
-        const top = sec.getBoundingClientRect().top + window.scrollY - offset;
-        window.scrollTo({ top, behavior: 'smooth' });
-        break;
-      }
-    }
-  }, 600);
+  setTimeout(scrollToRelevantMatch, 600);
   setInterval(async () => {
     await Promise.all([fetchScores(), fetchTopScorers()]);
     render(activeFilter);
