@@ -683,6 +683,7 @@ const MATCHES = [
 
 // ─── LIVE SCORES + KAARTEN ───────────────────────────
 let liveData  = {};
+let scoresInitialized = false; // na eerste load hoeven we alleen recente dagen te verversen
 let liveMatchClock = {}; // speeltijd ('45+2, 1e helft' etc.) per live wedstrijd
 let cardsData = {}; // keyed by player id/name
 
@@ -708,17 +709,15 @@ async function fetchScores() {
   liveMatchClock = {}; // reset, anders blijven oude klok-standen hangen
   try {
     // ESPN's scoreboard endpoint negeert een datumbereik (dates=A-B) en geeft
-    // altijd maar 1 dag terug. Daarom vragen we elke dag los op: de laatste
-    // 10 dagen plus morgen (ruim genoeg voor live/recente wedstrijden,
-    // zonder bij iedere fetch tientallen requests te doen).
-    const today = new Date();
-    const startDate = new Date(today.getTime() - 10 * 24 * 60 * 60 * 1000);
-    const endDate   = new Date(today.getTime() + 1  * 24 * 60 * 60 * 1000);
+    // altijd maar 1 dag terug. Eerste load: alle dagen vanaf toernooistart.
+    // Daarna: alleen de laatste 3 dagen + morgen (voor live/recente data).
     const tournamentStart = new Date(Date.UTC(2026, 5, 11));
-    const effectiveStart = startDate < tournamentStart ? tournamentStart : startDate;
+    const endDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const refreshStart = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+    const fetchFrom = scoresInitialized ? (refreshStart < tournamentStart ? tournamentStart : refreshStart) : tournamentStart;
 
     const dateList = [];
-    for (let d = new Date(effectiveStart); d <= endDate; d.setUTCDate(d.getUTCDate() + 1)) {
+    for (let d = new Date(fetchFrom); d <= endDate; d.setUTCDate(d.getUTCDate() + 1)) {
       const y = d.getUTCFullYear();
       const m = String(d.getUTCMonth() + 1).padStart(2, '0');
       const day = String(d.getUTCDate()).padStart(2, '0');
@@ -780,6 +779,7 @@ async function fetchScores() {
       });
     });
     source = 'ESPN API';
+    scoresInitialized = true;
   } catch(e) {
     try {
       const r2 = await fetch('https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json');
