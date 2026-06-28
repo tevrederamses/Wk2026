@@ -1171,50 +1171,73 @@ function renderKnockout() {
   ph.textContent = '⚡ Knock-out Fase';
   container.appendChild(ph);
 
+  // Bereken groepswinnaars en nummers 2 uit liveData
+  const tables = calcStandings();
+
+  // Hulpfuncties: geef #1 of #2 van een poule terug, of placeholder als onbekend
+  function top(g, pos) {
+    const rows = tables[g];
+    if (!rows) return null;
+    const team = rows[pos]?.[0];
+    // Alleen teruggeven als de poule volledig gespeeld is (alle 6 wedstrijden)
+    const played = rows.reduce((s, [,st]) => s + st.played, 0) / 2;
+    return played >= 6 ? team : null;
+  }
+  function name(g, pos, fallback) {
+    const t = top(g, pos);
+    return t ? (flag(t) + ' ' + t) : fallback;
+  }
+
+  // Vaste FIFA R32-koppeling (m.g = poulegroep, pos = 0-gebaseerd)
+  // Gebaseerd op het officiële FIFA-schema
+  const r32 = [
+    {time:'zo 28 jun 21:00', a: name('A',1,'nr.2 Poule A'), b: name('B',1,'nr.2 Poule B'), city:'Los Angeles'},
+    {time:'ma 29 jun 19:00', a: name('C',0,'1e Poule C'),   b: name('F',1,'nr.2 Poule F'), city:'Houston'},
+    {time:'ma 29 jun 22:30', a: name('E',0,'1e Poule E'),   b: '?? beste nr.3',             city:'Boston'},
+    {time:'di 30 jun 03:00', a: name('F',0,'1e Poule F'),   b: name('C',1,'nr.2 Poule C'), city:'Monterrey'},
+    {time:'di 30 jun 19:00', a: name('E',1,'nr.2 Poule E'), b: name('I',1,'nr.2 Poule I'), city:'Dallas'},
+    {time:'di 30 jun 23:00', a: name('I',0,'1e Poule I'),   b: '?? beste nr.3',             city:'New York'},
+    {time:'wo 1 jul 03:00',  a: name('A',0,'1e Poule A'),   b: '?? beste nr.3',             city:'Mexico City'},
+    {time:'wo 1 jul 18:00',  a: name('L',0,'1e Poule L'),   b: '?? beste nr.3',             city:'Atlanta'},
+    {time:'wo 1 jul 22:00',  a: name('G',0,'1e Poule G'),   b: '?? beste nr.3',             city:'Seattle'},
+    {time:'do 2 jul 02:00',  a: name('D',0,'1e Poule D'),   b: '?? beste nr.3',             city:'San Francisco'},
+    {time:'do 2 jul 21:00',  a: name('H',0,'1e Poule H'),   b: name('J',1,'nr.2 Poule J'), city:'Los Angeles'},
+    {time:'vr 3 jul 01:00',  a: name('K',1,'nr.2 Poule K'), b: name('L',1,'nr.2 Poule L'), city:'Toronto'},
+    {time:'vr 3 jul 05:00',  a: name('B',0,'1e Poule B'),   b: '?? beste nr.3',             city:'Vancouver'},
+    {time:'vr 3 jul 20:00',  a: name('D',1,'nr.2 Poule D'), b: name('G',1,'nr.2 Poule G'), city:'Dallas'},
+    {time:'za 4 jul 00:00',  a: name('J',0,'1e Poule J'),   b: name('H',1,'nr.2 Poule H'), city:'Miami'},
+    {time:'za 4 jul 03:30',  a: name('K',0,'1e Poule K'),   b: '?? beste nr.3',             city:'Kansas City'},
+  ];
+
   const rounds = [
-    { title: 'Ronde van 32 · 28 jun – 3 jul', matches: [
-      {time:'28 jun 21:00', teams:'2e Poule A vs 2e Poule B',    city:'Los Angeles'},
-      {time:'29 jun 19:00', teams:'1e Poule C vs 2e Poule F',    city:'Houston'},
-      {time:'29 jun 22:30', teams:'1e Poule E vs beste 3e',      city:'Boston'},
-      {time:'30 jun 03:00', teams:'1e Poule F vs 2e Poule C',    city:'Monterrey'},
-      {time:'30 jun 19:00', teams:'2e Poule E vs 2e Poule I',    city:'Dallas'},
-      {time:'30 jun 23:00', teams:'1e Poule I vs beste 3e',      city:'New York'},
-      {time:'1 jul 03:00',  teams:'1e Poule A vs beste 3e',      city:'Mexico City'},
-      {time:'1 jul 18:00',  teams:'1e Poule L vs beste 3e',      city:'Atlanta'},
-      {time:'1 jul 22:00',  teams:'1e Poule G vs beste 3e',      city:'Seattle'},
-      {time:'2 jul 02:00',  teams:'1e Poule D vs beste 3e',      city:'San Francisco'},
-      {time:'2 jul 21:00',  teams:'1e Poule H vs 2e Poule J',    city:'Los Angeles'},
-      {time:'3 jul 01:00',  teams:'2e Poule K vs 2e Poule L',    city:'Toronto'},
-      {time:'3 jul 05:00',  teams:'1e Poule B vs beste 3e',      city:'Vancouver'},
-      {time:'3 jul 20:00',  teams:'2e Poule D vs 2e Poule G',    city:'Dallas'},
-      {time:'4 jul 00:00',  teams:'1e Poule J vs 2e Poule H',    city:'Miami'},
-      {time:'4 jul 03:30',  teams:'1e Poule K vs beste 3e',      city:'Kansas City'},
-    ]},
+    { title: 'Ronde van 32 · 28 jun – 4 jul', matches:
+      r32.map(m => ({ time: m.time, teams: m.a + ' vs ' + m.b, city: m.city }))
+    },
     { title: 'Achtste finales · 4–7 jul', matches: [
-      {time:'4 jul 19:00', teams:'Winnaar R32 M1 vs M2', city:'Houston'},
-      {time:'4 jul 23:00', teams:'Winnaar R32 M3 vs M4', city:'Philadelphia'},
-      {time:'5 jul 22:00', teams:'Winnaar R32 M5 vs M6', city:'New York'},
-      {time:'6 jul 02:00', teams:'Winnaar R32 M7 vs M8', city:'Mexico City'},
-      {time:'6 jul 21:00', teams:'Winnaar R32 M9 vs M10', city:'Dallas'},
-      {time:'7 jul 02:00', teams:'Winnaar R32 M11 vs M12', city:'Seattle'},
-      {time:'7 jul 18:00', teams:'Winnaar R32 M13 vs M14', city:'Atlanta'},
-      {time:'7 jul 22:00', teams:'Winnaar R32 M15 vs M16', city:'Vancouver'},
+      {time:'za 4 jul 19:00', teams:'Winnaar R32 M1 vs M2', city:'Houston'},
+      {time:'za 4 jul 23:00', teams:'Winnaar R32 M3 vs M4', city:'Philadelphia'},
+      {time:'zo 5 jul 22:00', teams:'Winnaar R32 M5 vs M6', city:'New York'},
+      {time:'zo 6 jul 02:00', teams:'Winnaar R32 M7 vs M8', city:'Mexico City'},
+      {time:'ma 6 jul 21:00', teams:'Winnaar R32 M9 vs M10', city:'Dallas'},
+      {time:'ma 7 jul 02:00', teams:'Winnaar R32 M11 vs M12', city:'Seattle'},
+      {time:'di 7 jul 18:00', teams:'Winnaar R32 M13 vs M14', city:'Atlanta'},
+      {time:'di 7 jul 22:00', teams:'Winnaar R32 M15 vs M16', city:'Vancouver'},
     ]},
     { title: 'Kwartfinales · 9–12 jul', matches: [
-      {time:'9 jul 22:00',  teams:'Winnaar AF1 vs AF2', city:'Boston'},
-      {time:'10 jul 21:00', teams:'Winnaar AF3 vs AF4', city:'Los Angeles'},
-      {time:'11 jul 23:00', teams:'Winnaar AF5 vs AF6', city:'Miami'},
-      {time:'12 jul 03:00', teams:'Winnaar AF7 vs AF8', city:'Kansas City'},
+      {time:'do 9 jul 22:00',  teams:'Winnaar AF1 vs AF2', city:'Boston'},
+      {time:'vr 10 jul 21:00', teams:'Winnaar AF3 vs AF4', city:'Los Angeles'},
+      {time:'za 11 jul 23:00', teams:'Winnaar AF5 vs AF6', city:'Miami'},
+      {time:'za 12 jul 03:00', teams:'Winnaar AF7 vs AF8', city:'Kansas City'},
     ]},
     { title: 'Halve finales · 14–15 jul', matches: [
-      {time:'14 jul 21:00', teams:'Winnaar KF1 vs KF2', city:'Dallas'},
-      {time:'15 jul 21:00', teams:'Winnaar KF3 vs KF4', city:'Atlanta'},
+      {time:'di 14 jul 21:00', teams:'Winnaar KF1 vs KF2', city:'Dallas'},
+      {time:'wo 15 jul 21:00', teams:'Winnaar KF3 vs KF4', city:'Atlanta'},
     ]},
     { title: '3e Plaats · 18 jul', matches: [
-      {time:'18 jul 23:00', teams:'Verliezer HF1 vs HF2', city:'Miami'},
+      {time:'za 18 jul 23:00', teams:'Verliezer HF1 vs HF2', city:'Miami'},
     ]},
     { title: '🏆 FINALE · 19 jul', matches: [
-      {time:'19 jul 21:00', teams:'Winnaar HF1 vs Winnaar HF2', city:'MetLife Stadium, New York', final:true},
+      {time:'zo 19 jul 21:00', teams:'Winnaar HF1 vs Winnaar HF2', city:'MetLife Stadium, New York', final:true},
     ]},
   ];
 
