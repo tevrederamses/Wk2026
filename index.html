@@ -1292,38 +1292,34 @@ function renderKnockout() {
 
   // Vaste FIFA R32-koppeling (m.g = poulegroep, pos = 0-gebaseerd)
   // Gebaseerd op het officiële FIFA-schema
-  const r32 = [
-    {time:'zo 28 jun 21:00', a: name('A',1,'nr.2 Poule A'), b: name('B',1,'nr.2 Poule B'), city:'Los Angeles'},
-    {time:'ma 29 jun 19:00', a: name('C',0,'1e Poule C'),   b: name('F',1,'nr.2 Poule F'), city:'Houston'},
-    {time:'ma 29 jun 22:30', a: name('E',0,'Duitsland'),    b: flag('Paraguay') + ' Paraguay',  city:'Boston'},
-    {time:'di 30 jun 03:00', a: name('F',0,'1e Poule F'),   b: name('C',1,'nr.2 Poule C'), city:'Monterrey'},
-    {time:'di 30 jun 19:00', a: name('E',1,'nr.2 Poule E'), b: name('I',1,'nr.2 Poule I'), city:'Dallas'},
-    {time:'di 30 jun 23:00', a: name('I',0,'Frankrijk'),    b: flag('Sweden') + ' Zweden',       city:'New York'},
-    {time:'wo 1 jul 03:00',  a: name('A',0,'Mexico'),       b: flag('Ecuador') + ' Ecuador',     city:'Mexico City'},
-    {time:'wo 1 jul 18:00',  a: name('L',0,'Engeland'),     b: flag('DR Congo') + ' DR Congo',   city:'Atlanta'},
-    {time:'wo 1 jul 22:00',  a: name('G',0,'België'),       b: flag('Senegal') + ' Senegal',     city:'Seattle'},
-    {time:'do 2 jul 02:00',  a: name('D',0,'Verenigde Staten'), b: flag('Bosnia and Herzegovina') + ' Bosnië', city:'San Francisco'},
-    {time:'do 2 jul 21:00',  a: name('H',0,'1e Poule H'),   b: name('J',1,'Oostenrijk'), city:'Los Angeles'},
-    {time:'vr 3 jul 01:00',  a: name('K',1,'Portugal'), b: name('L',1,'Kroatië'), city:'Toronto'},
-    {time:'vr 3 jul 05:00',  a: name('B',0,'Zwitserland'),  b: flag('Iran') + ' Iran',           city:'Vancouver'},
-    {time:'vr 3 jul 20:00',  a: name('D',1,'nr.2 Poule D'), b: name('G',1,'nr.2 Poule G'), city:'Dallas'},
-    {time:'za 4 jul 00:00',  a: name('J',0,'1e Poule J'),   b: name('H',1,'nr.2 Poule H'), city:'Miami'},
-    {time:'za 4 jul 03:30',  a: name('K',0,'Colombia'),     b: flag('Ghana') + ' Ghana',          city:'Kansas City'},
-  ];
-
   const rounds = [
-    { title: 'Ronde van 32 · 28 jun – 4 jul', matches:
-      r32.map(m => ({ time: m.time, a: m.a, b: m.b, teams: m.a + ' vs ' + m.b, city: m.city }))
-    },
+    { title: 'Ronde van 32 · 28 jun – 4 jul', matches: [
+      {time:'zo 28 jun 21:00', a: name('A',1,'Zuid-Afrika'),    b: name('B',1,'Canada'),            city:'Los Angeles'},
+      {time:'ma 29 jun 19:00', a: name('C',0,'Brazilië'),       b: name('F',1,'Japan'),             city:'Houston'},
+      {time:'ma 29 jun 22:30', a: flag('Germany')+' Duitsland', b: flag('Paraguay')+' Paraguay',   city:'Boston'},
+      {time:'di 30 jun 03:00', a: name('F',0,'Nederland'),      b: name('C',1,'Marokko'),           city:'Monterrey'},
+      {time:'di 30 jun 19:00', a: name('E',1,'Ivoorkust'),      b: name('I',1,'Noorwegen'),         city:'Dallas'},
+      {time:'di 30 jun 23:00', a: name('I',0,'Frankrijk'),      b: flag('Sweden')+' Zweden',        city:'New York'},
+      {time:'wo 1 jul 03:00',  a: name('A',0,'Mexico'),         b: name('E',0,'Ecuador'),           city:'Mexico City'},
+      {time:'wo 1 jul 18:00',  a: name('L',0,'Engeland'),       b: flag('DR Congo')+' DR Congo',    city:'Atlanta'},
+      {time:'wo 1 jul 22:00',  a: name('G',0,'België'),         b: flag('Senegal')+' Senegal',      city:'Seattle'},
+      {time:'do 2 jul 02:00',  a: name('D',0,'VS'),             b: flag('Bosnia and Herzegovina')+' Bosnië', city:'San Francisco'},
+      {time:'do 2 jul 21:00',  a: name('H',0,'Spanje'),         b: name('J',1,'Oostenrijk'),        city:'Los Angeles'},
+      {time:'vr 3 jul 01:00',  a: name('K',1,'Portugal'),       b: name('L',1,'Kroatië'),           city:'Toronto'},
+      {time:'vr 3 jul 05:00',  a: name('B',0,'Zwitserland'),    b: flag('Algeria')+' Algerije',     city:'Vancouver'},
+      {time:'vr 3 jul 20:00',  a: name('D',1,'Australië'),      b: name('G',1,'Egypte'),            city:'Dallas'},
+      {time:'za 4 jul 00:00',  a: name('J',0,'Argentinië'),     b: name('H',1,'Kaapverdië'),        city:'Miami'},
+      {time:'za 4 jul 03:30',  a: name('K',0,'Colombia'),       b: flag('Ghana')+' Ghana',           city:'Kansas City'},
+    ]},
     { title: 'Achtste finales · 4–7 jul', matches: [
-      {time:'za 4 jul 19:00', teams:'Winnaar Zuid-Afrika–Canada vs Winnaar Nederland–Marokko', city:'Houston'},
-      {time:'za 4 jul 23:00', teams:'Winnaar Duitsland–nr.3 vs Winnaar Frankrijk–nr.3',       city:'Philadelphia'},
-      {time:'zo 5 jul 22:00', teams:'Winnaar Brazilië–Japan vs Winnaar Ivoorkust–Noorwegen',  city:'New York'},
-      {time:'zo 6 jul 02:00', teams:'Winnaar Mexico–nr.3 vs Winnaar Engeland–nr.3',           city:'Mexico City'},
-      {time:'ma 6 jul 21:00', teams:'Winnaar Portugal–Kroatië vs Winnaar Spanje–nr.2J',         city:'Dallas'},
-      {time:'ma 7 jul 02:00', teams:'Winnaar VS–Bosnië vs Winnaar België–nr.3',               city:'Seattle'},
-      {time:'di 7 jul 18:00', teams:'Winnaar Argentinië–Kaapverdië vs Winnaar Australië–Egypte', city:'Atlanta'},
-      {time:'di 7 jul 22:00', teams:'Winnaar Zwitserland–nr.3 vs Winnaar Colombia–Ghana',      city:'Vancouver'},
+      {time:'za 4 jul 19:00', teams:'Winnaar Zuid-Afrika–Canada vs Winnaar Nederland–Marokko',    city:'Houston'},
+      {time:'za 4 jul 23:00', teams:'Winnaar Duitsland–Paraguay vs Winnaar Frankrijk–Zweden',     city:'Philadelphia'},
+      {time:'zo 5 jul 22:00', teams:'Winnaar Brazilië–Japan vs Winnaar Ivoorkust–Noorwegen',      city:'New York'},
+      {time:'zo 6 jul 02:00', teams:'Winnaar Mexico–Ecuador vs Winnaar Engeland–DR Congo',         city:'Mexico City'},
+      {time:'ma 6 jul 21:00', teams:'Winnaar Portugal–Kroatië vs Winnaar Spanje–Oostenrijk',      city:'Dallas'},
+      {time:'ma 7 jul 02:00', teams:'Winnaar VS–Bosnië vs Winnaar België–Senegal',                city:'Seattle'},
+      {time:'di 7 jul 18:00', teams:'Winnaar Argentinië–Kaapverdië vs Winnaar Australië–Egypte',  city:'Atlanta'},
+      {time:'di 7 jul 22:00', teams:'Winnaar Zwitserland–Algerije vs Winnaar Colombia–Ghana',      city:'Vancouver'},
     ]},
     { title: 'Kwartfinales · 9–12 jul', matches: [
       {time:'do 9 jul 22:00',  teams:'Winnaar AF1 vs AF2', city:'Boston'},
@@ -1395,10 +1391,17 @@ function renderKnockout() {
       const awayFlag = awayParts[0]?.match(/\p{Emoji}/u) ? awayParts[0] : flag(awayTeam);
       const awayName = awayParts[0]?.match(/\p{Emoji}/u) ? awayParts.slice(1).join(' ') : awayTeam;
 
+      const koHome = homeName || homeTeam;
+      const koAway = awayName || awayTeam;
+      const koDone = koMatch?.done;
+      const koYtBtn = koDone
+        ? '<a class="yt-btn" href="https://www.youtube.com/results?search_query=' + encodeURIComponent('NOS samenvatting ' + koHome + ' ' + koAway + ' WK 2026') + '" target="_blank" rel="noopener">📺 Samenvatting</a>'
+        : '';
+
       card.innerHTML =
-        '<div class="team home"><span class="team-name">' + (homeName || homeTeam) + '</span><span class="flag">' + homeFlag + '</span></div>' +
-        '<div class="score-block">' + scoreHtml + '<span class="score-city">' + m.city + '</span></div>' +
-        '<div class="team away"><span class="flag">' + awayFlag + '</span><span class="team-name">' + (awayName || awayTeam) + '</span></div>';
+        '<div class="team home"><span class="team-name">' + koHome + '</span><span class="flag">' + homeFlag + '</span></div>' +
+        '<div class="score-block">' + scoreHtml + '<span class="score-city">' + m.city + '</span>' + koYtBtn + '</div>' +
+        '<div class="team away"><span class="flag">' + awayFlag + '</span><span class="team-name">' + koAway + '</span></div>';
       matchesDiv.appendChild(card);
     });
     col.appendChild(matchesDiv);
@@ -1581,8 +1584,11 @@ function scrollToRelevantMatch() {
 (async () => {
   await Promise.all([fetchScores(), fetchTopScorers()]);
   startCountdown();
-  render('all');
-  setTimeout(scrollToRelevantMatch, 600);
+  render('knockout');
+  activeFilter = 'knockout';
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('[data-filter="knockout"]')?.classList.add('active');
+  setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 600);
   setInterval(async () => {
     await Promise.all([fetchScores(), fetchTopScorers()]);
     render(activeFilter);
