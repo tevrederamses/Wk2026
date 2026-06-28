@@ -241,29 +241,42 @@ main { max-width: 900px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
   content: '★'; position: absolute; top: 5px; right: 8px;
   font-size: 0.65rem; color: var(--accent); opacity: 0.75;
 }
-.match-card.nl-match {
+.match-card.nl-match,
+.bracket-match.nl-match {
   border-color: var(--accent);
   border-width: 2px;
   background: var(--accent);
 }
 .match-card.nl-match .team-name,
+.bracket-match.nl-match .team-name,
 .match-card.nl-match .score,
+.bracket-match.nl-match .score,
 .match-card.nl-match .score-pending,
+.bracket-match.nl-match .score-pending,
 .match-card.nl-match .score-meta,
+.bracket-match.nl-match .score-meta,
 .match-card.nl-match .score-city,
+.bracket-match.nl-match .score-city,
 .match-card.nl-match .score-round,
-.match-card.nl-match .day-count {
+.bracket-match.nl-match .score-round,
+.match-card.nl-match .day-count,
+.bracket-match.nl-match .day-count {
   color: #fff;
 }
-.match-card.nl-match .poule-link {
+.match-card.nl-match .poule-link,
+.bracket-match.nl-match .poule-link {
   color: #fff; border-color: #fff; background: rgba(255,255,255,0.15);
 }
-.match-card.nl-match .poule-link:hover { background: #fff; color: var(--accent); }
-.match-card.nl-match .yt-btn {
+.match-card.nl-match .poule-link:hover,
+.bracket-match.nl-match .poule-link:hover { background: #fff; color: var(--accent); }
+.match-card.nl-match .yt-btn,
+.bracket-match.nl-match .yt-btn {
   color: #fff; border-color: #fff; background: rgba(255,255,255,0.15);
 }
-.match-card.nl-match .yt-btn:hover { background: #fff; color: var(--accent); }
-.match-card.nl-match::before {
+.match-card.nl-match .yt-btn:hover,
+.bracket-match.nl-match .yt-btn:hover { background: #fff; color: var(--accent); }
+.match-card.nl-match::before,
+.bracket-match.nl-match::before {
   content: '🇳🇱'; position: absolute; top: 5px; right: 8px;
   font-size: 0.85rem;
 }
@@ -326,43 +339,52 @@ main { max-width: 900px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
 }
 
 
-/* ─── KNOCKOUT INFO ──────────────────────────────────── */
-.ko-info {
-  color: var(--text2); font-size: 0.82rem; padding: 1rem 1.2rem;
-  background: var(--card); border: 1px solid var(--border); border-radius: 8px;
-  line-height: 1.8;
+/* ─── KNOCKOUT GOTO BUTTON ───────────────────────────── */
+.ko-goto-btn {
+  display: block; width: 100%; margin: 0.5rem 0 1.5rem;
+  padding: 0.8rem 1rem; border-radius: 10px;
+  background: var(--accent); color: #fff;
+  font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem;
+  letter-spacing: 0.06em; border: none; cursor: pointer;
+  text-align: center; transition: opacity .15s;
 }
-.ko-info strong { color: var(--text); }
-.ko-info .finale { color: var(--accent); font-weight: 700; }
+.ko-goto-btn:hover { opacity: 0.85; }
 
 /* ─── KNOCKOUT BRACKET ──────────────────────────────── */
 .bracket-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
   margin-top: 0.5rem;
 }
 .bracket-round { }
 .bracket-round-title {
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 0.95rem; letter-spacing: 0.08em;
-  color: var(--muted); text-transform: uppercase;
-  margin-bottom: 0.4rem; padding-bottom: 0.3rem;
-  border-bottom: 1px solid var(--border);
+  font-size: 1rem; letter-spacing: 0.08em;
+  color: var(--accent); text-transform: uppercase;
+  margin-bottom: 0.5rem; padding-bottom: 0.3rem;
+  border-bottom: 2px solid var(--accent);
+}
+.bracket-matches {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
 }
 .bracket-match {
   background: var(--card); border: 1px solid var(--border);
-  border-radius: 6px; padding: 0.45rem 0.7rem;
-  margin-bottom: 0.35rem; font-size: 0.75rem;
+  border-radius: 8px; padding: 0.7rem 1rem;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+  transition: border-color .15s;
 }
-.bracket-match .bm-time { color: var(--muted); font-size: 0.65rem; margin-bottom: 0.15rem; }
-.bracket-match .bm-teams { color: var(--text2); line-height: 1.5; }
-.bracket-match .bm-city { color: var(--muted); font-size: 0.65rem; margin-top: 0.1rem; }
+.bracket-match:hover { border-color: var(--accent); }
 .bracket-match.final-match {
-  border-color: var(--accent);
+  border-color: var(--accent); border-width: 2px;
   background: var(--big-bg);
 }
-.bracket-match.final-match .bm-teams { color: var(--accent); font-weight: 700; }
 
 /* ─── STANDINGS ─────────────────────────────────────── */
 .standings-grid {
@@ -686,6 +708,7 @@ let liveData  = {};
 let scoresInitialized = false; // na eerste load hoeven we alleen recente dagen te verversen
 let liveMatchClock = {}; // speeltijd ('45+2, 1e helft' etc.) per live wedstrijd
 let cardsData = {}; // keyed by player id/name
+let koData = {}; // knock-out uitslagen: key = 'YYYYMMDD|home|away' → {home, away, score, clock, done}
 
 const ESPN_MAP = {
   'usa': 'united states',
@@ -755,6 +778,25 @@ async function fetchScores() {
         if (inProgress && !done) {
           liveMatchClock[t1 + '|' + t2] = comp.status?.displayClock || '';
           liveMatchClock[t2 + '|' + t1] = comp.status?.displayClock || '';
+        }
+
+        // Knock-out wedstrijden (na 27 juni): ook opslaan op datum voor bracket
+        const eventDate = ev.date?.split('T')[0] || '';
+        if (eventDate >= '2026-06-28') {
+          const scoreHome = parseInt(home.score ?? '0');
+          const scoreAway = parseInt(away.score ?? '0');
+          const homeName = home.team?.displayName || '';
+          const awayName = away.team?.displayName || '';
+          const key = eventDate + '|' + homeName + '|' + awayName;
+          const eventCity = comp.venue?.fullName || comp.venue?.address?.city || '';
+          koData[key] = {
+            date: eventDate,
+            home: homeName, away: awayName,
+            scoreHome, scoreAway,
+            city: eventCity,
+            clock: inProgress ? (comp.status?.displayClock || '') : '',
+            done, inProgress
+          };
         }
       }
 
@@ -1086,6 +1128,16 @@ function render(filter) {
   });
 
   if (filter === 'today' && !list.length) {
+    // Groepsfase voorbij? Redirect naar knock-out
+    const today2 = todayStr();
+    if (today2 > '2026-06-28') {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector('[data-filter="knockout"]')?.classList.add('active');
+      activeFilter = 'knockout';
+      render('knockout');
+      setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 60);
+      return;
+    }
     container.innerHTML = '<div class="no-results">Geen wedstrijden vandaag. Kies een andere filter.</div>';
     return;
   }
@@ -1156,10 +1208,17 @@ function render(filter) {
     ph2.className = 'phase-hdr';
     ph2.textContent = '⚡ Knock-out Fase';
     container.appendChild(ph2);
-    const box = document.createElement('div');
-    box.className = 'ko-info';
-    box.innerHTML = '<strong>Ronde van 32</strong> — 28 juni t/m 3 juli 2026<br><strong>Achtste finales</strong> — 4 t/m 7 juli 2026<br><strong>Kwartfinales</strong> — 9 t/m 12 juli 2026<br><strong>Halve finales</strong> — 14 &amp; 15 juli 2026<br><span class="finale">🏆 FINALE — 19 juli 2026 · MetLife Stadium, New York · 21:00</span><br><span style="font-size:.75rem;color:var(--muted);display:block;margin-top:.5rem">Bekijk het volledige schema via de Knock-out filter ↑</span>';
-    container.appendChild(box);
+    const btn = document.createElement('button');
+    btn.className = 'ko-goto-btn';
+    btn.textContent = '⚡ Bekijk Knock-out schema →';
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector('[data-filter="knockout"]')?.classList.add('active');
+      activeFilter = 'knockout';
+      render('knockout');
+      setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 60);
+    });
+    container.appendChild(btn);
   }
 }
 
@@ -1188,40 +1247,83 @@ function renderKnockout() {
     return t ? (flag(t) + ' ' + t) : fallback;
   }
 
+  // Bereken beste 8 nummers 3
+  function calcBestThirds() {
+    const thirds = Object.keys(GROUPS).map(g => {
+      const rows = tables[g];
+      if (!rows) return null;
+      const played = rows.reduce((s, [,st]) => s + st.played, 0) / 2;
+      if (played < 6) return null;
+      const [team, stats] = rows[2];
+      return { g, team, pts: stats.pts, gd: stats.gf - stats.ga, gf: stats.gf };
+    }).filter(Boolean);
+
+    thirds.sort((a,b) => (b.pts-a.pts) || (b.gd-a.gd) || (b.gf-a.gf));
+    return thirds.slice(0, 8);
+  }
+
+  const bestThirds = calcBestThirds();
+  const bestThirdGroups = new Set(bestThirds.map(t => t.g));
+
+  // FIFA-matrix: welke groepswinnaar treft welke beste nr.3
+  // Gebaseerd op officieel FIFA-schema (vereenvoudigd — exacte matrix hangt af van combinatie van 8 groepen)
+  // Voor nu: toon de beste nr.3 met de hoogste ranking als placeholder-label
+  function bestNr3Label(rank) {
+    const t = bestThirds[rank];
+    if (!t) return 'beste nr.3';
+    return flag(t.team) + ' ' + t.team;
+  }
+
+  // Datumtabel voor knock-out wedstrijden (voor ESPN koData lookup)
+  const koDateMap = {
+    '28 jun': '2026-06-28', '29 jun': '2026-06-29', '30 jun': '2026-06-30',
+    '1 jul':  '2026-07-01', '2 jul':  '2026-07-02', '3 jul':  '2026-07-03',
+    '4 jul':  '2026-07-04', '5 jul':  '2026-07-05', '6 jul':  '2026-07-06',
+    '7 jul':  '2026-07-07', '9 jul':  '2026-07-09', '10 jul': '2026-07-10',
+    '11 jul': '2026-07-11', '12 jul': '2026-07-12', '14 jul': '2026-07-14',
+    '15 jul': '2026-07-15', '18 jul': '2026-07-18', '19 jul': '2026-07-19',
+  };
+  function getKODate(timeStr) {
+    for (const [k, v] of Object.entries(koDateMap)) {
+      if (timeStr.includes(k)) return v;
+    }
+    return null;
+  }
+
   // Vaste FIFA R32-koppeling (m.g = poulegroep, pos = 0-gebaseerd)
   // Gebaseerd op het officiële FIFA-schema
   const r32 = [
     {time:'zo 28 jun 21:00', a: name('A',1,'nr.2 Poule A'), b: name('B',1,'nr.2 Poule B'), city:'Los Angeles'},
     {time:'ma 29 jun 19:00', a: name('C',0,'1e Poule C'),   b: name('F',1,'nr.2 Poule F'), city:'Houston'},
-    {time:'ma 29 jun 22:30', a: name('E',0,'1e Poule E'),   b: '?? beste nr.3',             city:'Boston'},
+    {time:'ma 29 jun 22:30', a: name('E',0,'Duitsland'),    b: flag('Paraguay') + ' Paraguay',  city:'Boston'},
     {time:'di 30 jun 03:00', a: name('F',0,'1e Poule F'),   b: name('C',1,'nr.2 Poule C'), city:'Monterrey'},
     {time:'di 30 jun 19:00', a: name('E',1,'nr.2 Poule E'), b: name('I',1,'nr.2 Poule I'), city:'Dallas'},
-    {time:'di 30 jun 23:00', a: name('I',0,'1e Poule I'),   b: '?? beste nr.3',             city:'New York'},
-    {time:'wo 1 jul 03:00',  a: name('A',0,'1e Poule A'),   b: '?? beste nr.3',             city:'Mexico City'},
-    {time:'wo 1 jul 18:00',  a: name('L',0,'1e Poule L'),   b: '?? beste nr.3',             city:'Atlanta'},
-    {time:'wo 1 jul 22:00',  a: name('G',0,'1e Poule G'),   b: '?? beste nr.3',             city:'Seattle'},
-    {time:'do 2 jul 02:00',  a: name('D',0,'1e Poule D'),   b: '?? beste nr.3',             city:'San Francisco'},
-    {time:'do 2 jul 21:00',  a: name('H',0,'1e Poule H'),   b: name('J',1,'nr.2 Poule J'), city:'Los Angeles'},
-    {time:'vr 3 jul 01:00',  a: name('K',1,'nr.2 Poule K'), b: name('L',1,'nr.2 Poule L'), city:'Toronto'},
-    {time:'vr 3 jul 05:00',  a: name('B',0,'1e Poule B'),   b: '?? beste nr.3',             city:'Vancouver'},
+    {time:'di 30 jun 23:00', a: name('I',0,'Frankrijk'),    b: flag('Sweden') + ' Zweden',       city:'New York'},
+    {time:'wo 1 jul 03:00',  a: name('A',0,'Mexico'),       b: flag('Ecuador') + ' Ecuador',     city:'Mexico City'},
+    {time:'wo 1 jul 18:00',  a: name('L',0,'Engeland'),     b: flag('DR Congo') + ' DR Congo',   city:'Atlanta'},
+    {time:'wo 1 jul 22:00',  a: name('G',0,'België'),       b: flag('Senegal') + ' Senegal',     city:'Seattle'},
+    {time:'do 2 jul 02:00',  a: name('D',0,'Verenigde Staten'), b: flag('Bosnia and Herzegovina') + ' Bosnië', city:'San Francisco'},
+    {time:'do 2 jul 21:00',  a: name('H',0,'1e Poule H'),   b: name('J',1,'Oostenrijk'), city:'Los Angeles'},
+    {time:'vr 3 jul 01:00',  a: name('K',1,'Portugal'), b: name('L',1,'Kroatië'), city:'Toronto'},
+    {time:'vr 3 jul 05:00',  a: name('B',0,'Zwitserland'),  b: flag('Iran') + ' Iran',           city:'Vancouver'},
     {time:'vr 3 jul 20:00',  a: name('D',1,'nr.2 Poule D'), b: name('G',1,'nr.2 Poule G'), city:'Dallas'},
     {time:'za 4 jul 00:00',  a: name('J',0,'1e Poule J'),   b: name('H',1,'nr.2 Poule H'), city:'Miami'},
-    {time:'za 4 jul 03:30',  a: name('K',0,'1e Poule K'),   b: '?? beste nr.3',             city:'Kansas City'},
+    {time:'za 4 jul 03:30',  a: name('K',0,'Colombia'),     b: flag('Ghana') + ' Ghana',          city:'Kansas City'},
   ];
 
   const rounds = [
     { title: 'Ronde van 32 · 28 jun – 4 jul', matches:
-      r32.map(m => ({ time: m.time, teams: m.a + ' vs ' + m.b, city: m.city }))
+      r32.map(m => ({ time: m.time, a: m.a, b: m.b, teams: m.a + ' vs ' + m.b, city: m.city }))
     },
     { title: 'Achtste finales · 4–7 jul', matches: [
-      {time:'za 4 jul 19:00', teams:'Winnaar R32 M1 vs M2', city:'Houston'},
-      {time:'za 4 jul 23:00', teams:'Winnaar R32 M3 vs M4', city:'Philadelphia'},
-      {time:'zo 5 jul 22:00', teams:'Winnaar R32 M5 vs M6', city:'New York'},
-      {time:'zo 6 jul 02:00', teams:'Winnaar R32 M7 vs M8', city:'Mexico City'},
-      {time:'ma 6 jul 21:00', teams:'Winnaar R32 M9 vs M10', city:'Dallas'},
-      {time:'ma 7 jul 02:00', teams:'Winnaar R32 M11 vs M12', city:'Seattle'},
-      {time:'di 7 jul 18:00', teams:'Winnaar R32 M13 vs M14', city:'Atlanta'},
-      {time:'di 7 jul 22:00', teams:'Winnaar R32 M15 vs M16', city:'Vancouver'},
+      {time:'za 4 jul 19:00', teams:'Winnaar Zuid-Afrika–Canada vs Winnaar Nederland–Marokko', city:'Houston'},
+      {time:'za 4 jul 23:00', teams:'Winnaar Duitsland–nr.3 vs Winnaar Frankrijk–nr.3',       city:'Philadelphia'},
+      {time:'zo 5 jul 22:00', teams:'Winnaar Brazilië–Japan vs Winnaar Ivoorkust–Noorwegen',  city:'New York'},
+      {time:'zo 6 jul 02:00', teams:'Winnaar Mexico–nr.3 vs Winnaar Engeland–nr.3',           city:'Mexico City'},
+      {time:'ma 6 jul 21:00', teams:'Winnaar Portugal–Kroatië vs Winnaar Spanje–nr.2J',         city:'Dallas'},
+      {time:'ma 7 jul 02:00', teams:'Winnaar VS–Bosnië vs Winnaar België–nr.3',               city:'Seattle'},
+      {time:'di 7 jul 18:00', teams:'Winnaar Argentinië–Kaapverdië vs Winnaar Australië–Egypte', city:'Atlanta'},
+      {time:'di 7 jul 22:00', teams:'Winnaar Zwitserland–nr.3 vs Winnaar Colombia–Ghana',      city:'Vancouver'},
     ]},
     { title: 'Kwartfinales · 9–12 jul', matches: [
       {time:'do 9 jul 22:00',  teams:'Winnaar AF1 vs AF2', city:'Boston'},
@@ -1247,12 +1349,59 @@ function renderKnockout() {
     const col = document.createElement('div');
     col.className = 'bracket-round';
     col.innerHTML = '<div class="bracket-round-title">' + round.title + '</div>';
+    const matchesDiv = document.createElement('div');
+    matchesDiv.className = 'bracket-matches';
     round.matches.forEach(m => {
       const card = document.createElement('div');
-      card.className = 'bracket-match' + (m.final ? ' final-match' : '');
-      card.innerHTML = '<div class="bm-time">' + m.time + '</div><div class="bm-teams">' + m.teams + '</div><div class="bm-city">' + m.city + '</div>';
-      col.appendChild(card);
+      const isNLmatch = m.a?.includes('Netherlands') || m.b?.includes('Netherlands') || m.teams?.includes('Netherlands');
+      card.className = 'bracket-match' + (m.final ? ' final-match' : '') + (isNLmatch ? ' nl-match' : '');
+      // Bepaal teams en score
+      const matchDate = getKODate(m.time);
+      let koMatch = null;
+      if (matchDate) {
+        const candidates = Object.values(koData).filter(k => k.date === matchDate);
+        if (candidates.length === 1) {
+          // Maar alleen als het géén groepswedstrijd is (groepswedstrijden eindigen op 27 juni)
+          koMatch = matchDate >= '2026-06-28' ? candidates[0] : null;
+        } else if (candidates.length > 1 && m.a && !m.a.includes('??') && !m.a.includes('1e') && !m.a.includes('nr.')) {
+          // Meerdere wedstrijden op deze datum: match op teamnaam
+          const aName = m.a.replace(/^\S+\s/, '').toLowerCase(); // verwijder vlag-emoji
+          koMatch = candidates.find(k =>
+            k.home.toLowerCase().includes(aName) || normTeam(k.home) === normTeam(aName)
+          ) || null;
+        }
+      }
+
+      let homeTeam = m.a || '';
+      let awayTeam = m.b || '';
+      let scoreHtml;
+
+      if (koMatch) {
+        homeTeam = koMatch.home;
+        awayTeam = koMatch.away;
+        const sc0 = koMatch.scoreHome;
+        const sc1 = koMatch.scoreAway;
+        const col = koMatch.inProgress && !koMatch.done ? 'var(--live-col)' : 'var(--accent)';
+        const label = koMatch.done ? 'Eindstand' : (koMatch.inProgress ? (koMatch.clock || 'Live') : 'Live');
+        scoreHtml = '<span class="score" style="color:' + col + '">' + sc0 + '&nbsp;–&nbsp;' + sc1 + '</span><span class="score-meta" style="color:' + col + '">' + label + '</span>';
+      } else {
+        scoreHtml = '<span class="score-pending">' + m.time.split(' ').slice(-1)[0] + '</span><span class="score-meta">' + m.time.replace(/\s\d+:\d+$/, '') + '</span>';
+      }
+
+      const homeParts = homeTeam.split(' ');
+      const awayParts = awayTeam.split(' ');
+      const homeFlag = homeParts[0]?.match(/\p{Emoji}/u) ? homeParts[0] : flag(homeTeam);
+      const homeName = homeParts[0]?.match(/\p{Emoji}/u) ? homeParts.slice(1).join(' ') : homeTeam;
+      const awayFlag = awayParts[0]?.match(/\p{Emoji}/u) ? awayParts[0] : flag(awayTeam);
+      const awayName = awayParts[0]?.match(/\p{Emoji}/u) ? awayParts.slice(1).join(' ') : awayTeam;
+
+      card.innerHTML =
+        '<div class="team home"><span class="team-name">' + (homeName || homeTeam) + '</span><span class="flag">' + homeFlag + '</span></div>' +
+        '<div class="score-block">' + scoreHtml + '<span class="score-city">' + m.city + '</span></div>' +
+        '<div class="team away"><span class="flag">' + awayFlag + '</span><span class="team-name">' + (awayName || awayTeam) + '</span></div>';
+      matchesDiv.appendChild(card);
     });
+    col.appendChild(matchesDiv);
     grid.appendChild(col);
   });
   container.appendChild(grid);
@@ -1264,15 +1413,23 @@ function renderKnockout() {
 }
 
 // ─── COUNTDOWN ───────────────────────────────────────
+// Knockout wedstrijden voor Nederland (handmatig bijhouden)
+const NL_KO_MATCHES = [
+  {date:'2026-06-30', time:'03:00', home:'Netherlands', away:'Morocco'},
+  // Achtste finale etc. worden hieronder toegevoegd zodra bekend
+];
+
 function getNextNLMatch() {
   const now = Date.now();
-  return MATCHES
-    .filter(m => NL.has(m.home) || NL.has(m.away))
-    .find(m => {
-      const [h, min] = m.time.split(':').map(Number);
-      const [y, mo, d] = m.date.split('-').map(Number);
-      return Date.UTC(y, mo - 1, d, h - 2, min) > now;
-    }) || null;
+  const allNL = [
+    ...MATCHES.filter(m => NL.has(m.home) || NL.has(m.away)),
+    ...NL_KO_MATCHES
+  ];
+  return allNL.find(m => {
+    const [h, min] = m.time.split(':').map(Number);
+    const [y, mo, d] = m.date.split('-').map(Number);
+    return Date.UTC(y, mo - 1, d, h - 2, min) > now;
+  }) || null;
 }
 
 function startCountdown() {
@@ -1374,6 +1531,8 @@ document.getElementById('filters').addEventListener('click', e => {
   render(activeFilter);
   if (!['standings', 'scorers', 'cards', 'knockout'].includes(activeFilter)) {
     setTimeout(scrollToRelevantMatch, 60);
+  } else if (activeFilter === 'knockout') {
+    setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 60);
   }
 });
 
