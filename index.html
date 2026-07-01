@@ -316,6 +316,11 @@ main { max-width: 900px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
 .score-pending { font-family: 'Bebas Neue', sans-serif; font-size: 1.15rem; letter-spacing: 0.06em; color: var(--muted); }
 .score-meta { font-size: 0.66rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
 .score-city { font-size: 0.61rem; color: var(--muted); margin-top: 1px; }
+.ko-winner {
+  display: block; font-size: 0.72rem; font-weight: 700; margin-top: 4px;
+  color: var(--accent);
+}
+.bracket-match.nl-match .ko-winner { color: #fff; }
 .score-round {
   position: absolute; top: 6px; left: 8px;
   font-size: 0.6rem; color: var(--muted); font-weight: 600;
@@ -789,10 +794,31 @@ async function fetchScores() {
           const awayName = away.team?.displayName || '';
           const key = eventDate + '|' + homeName + '|' + awayName;
           const eventCity = comp.venue?.fullName || comp.venue?.address?.city || '';
+
+          // Penalty shootout & extra time detectie
+          const detail = comp.status?.type?.detail || '';
+          const isPenalties = detail.toLowerCase().includes('pen') || detail.toLowerCase().includes('shoot');
+          const isET = detail.toLowerCase().includes('et') || detail.toLowerCase().includes('extra');
+          // Penalty scores (ESPN slaat dit op in shootoutScore of linescores)
+          const homePens = home.shootoutScore ?? home.linescores?.find(l => l.type === 'shootout')?.value ?? null;
+          const awayPens = away.shootoutScore ?? away.linescores?.find(l => l.type === 'shootout')?.value ?? null;
+          // Winnaar bepalen
+          let winner = null;
+          if (done) {
+            if (isPenalties && homePens !== null && awayPens !== null) {
+              winner = homePens > awayPens ? homeName : awayName;
+            } else if (scoreHome !== scoreAway) {
+              winner = scoreHome > scoreAway ? homeName : awayName;
+            }
+          }
+
           koData[key] = {
             date: eventDate,
             home: homeName, away: awayName,
             scoreHome, scoreAway,
+            homePens, awayPens,
+            isPenalties, isET,
+            winner,
             city: eventCity,
             clock: inProgress ? (comp.status?.displayClock || '') : '',
             done, inProgress
@@ -1294,12 +1320,12 @@ function renderKnockout() {
   // Gebaseerd op het officiële FIFA-schema
   const rounds = [
     { title: 'Ronde van 32 · 28 jun – 4 jul', matches: [
-      {time:'zo 28 jun 21:00', a: name('A',1,'Zuid-Afrika'),    b: name('B',1,'Canada'),            city:'Los Angeles'},
-      {time:'ma 29 jun 19:00', a: name('C',0,'Brazilië'),       b: name('F',1,'Japan'),             city:'Houston'},
-      {time:'ma 29 jun 22:30', a: flag('Germany')+' Duitsland', b: flag('Paraguay')+' Paraguay',   city:'Boston'},
-      {time:'di 30 jun 03:00', a: name('F',0,'Nederland'),      b: name('C',1,'Marokko'),           city:'Monterrey'},
-      {time:'di 30 jun 19:00', a: name('E',1,'Ivoorkust'),      b: name('I',1,'Noorwegen'),         city:'Dallas'},
-      {time:'di 30 jun 23:00', a: name('I',0,'Frankrijk'),      b: flag('Sweden')+' Zweden',        city:'New York'},
+      {time:'zo 28 jun 21:00', a: name('A',1,'Zuid-Afrika'),    b: name('B',1,'Canada'),            city:'Los Angeles', score:[0,1], done:true, winner:'Canada'},
+      {time:'ma 29 jun 19:00', a: name('C',0,'Brazilië'),       b: name('F',1,'Japan'),             city:'Houston', score:[2,1], done:true, winner:'Brazil'},
+      {time:'ma 29 jun 22:30', a: flag('Germany')+' Duitsland', b: flag('Paraguay')+' Paraguay',   city:'Boston', score:[1,1], pens:[3,4], done:true, winner:'Paraguay'},
+      {time:'di 30 jun 03:00', a: name('F',0,'Nederland'),      b: name('C',1,'Marokko'),           city:'Monterrey', score:[1,1], pens:[2,3], done:true, winner:'Morocco'},
+      {time:'di 30 jun 19:00', a: name('E',1,'Ivoorkust'),      b: name('I',1,'Noorwegen'),         city:'Dallas', score:[1,2], done:true, winner:'Norway'},
+      {time:'di 30 jun 23:00', a: name('I',0,'Frankrijk'),      b: flag('Sweden')+' Zweden',        city:'New York', score:[3,0], done:true, winner:'France'},
       {time:'wo 1 jul 03:00',  a: name('A',0,'Mexico'),         b: name('E',0,'Ecuador'),           city:'Mexico City'},
       {time:'wo 1 jul 18:00',  a: name('L',0,'Engeland'),       b: flag('DR Congo')+' DR Congo',    city:'Atlanta'},
       {time:'wo 1 jul 22:00',  a: name('G',0,'België'),         b: flag('Senegal')+' Senegal',      city:'Seattle'},
@@ -1354,17 +1380,17 @@ function renderKnockout() {
       // Bepaal teams en score
       const matchDate = getKODate(m.time);
       let koMatch = null;
-      if (matchDate) {
+      if (matchDate && matchDate >= '2026-06-28') {
         const candidates = Object.values(koData).filter(k => k.date === matchDate);
-        if (candidates.length === 1) {
-          // Maar alleen als het géén groepswedstrijd is (groepswedstrijden eindigen op 27 juni)
-          koMatch = matchDate >= '2026-06-28' ? candidates[0] : null;
-        } else if (candidates.length > 1 && m.a && !m.a.includes('??') && !m.a.includes('1e') && !m.a.includes('nr.')) {
-          // Meerdere wedstrijden op deze datum: match op teamnaam
-          const aName = m.a.replace(/^\S+\s/, '').toLowerCase(); // verwijder vlag-emoji
-          koMatch = candidates.find(k =>
-            k.home.toLowerCase().includes(aName) || normTeam(k.home) === normTeam(aName)
-          ) || null;
+        if (candidates.length > 0 && m.a) {
+          // Strip vlag-emoji en normaliseer via NL_TO_EN
+          const rawA = normTeam(m.a.replace(/[^a-zA-ZÀ-ɏ\s]/g, '').trim().toLowerCase());
+          if (rawA.length > 1) {
+            koMatch = candidates.find(k => {
+              const h = normTeam(k.home);
+              return h === rawA || h.includes(rawA) || rawA.includes(h);
+            }) || null;
+          }
         }
       }
 
@@ -1372,14 +1398,40 @@ function renderKnockout() {
       let awayTeam = m.b || '';
       let scoreHtml;
 
-      if (koMatch) {
-        homeTeam = koMatch.home;
-        awayTeam = koMatch.away;
-        const sc0 = koMatch.scoreHome;
-        const sc1 = koMatch.scoreAway;
-        const col = koMatch.inProgress && !koMatch.done ? 'var(--live-col)' : 'var(--accent)';
-        const label = koMatch.done ? 'Eindstand' : (koMatch.inProgress ? (koMatch.clock || 'Live') : 'Live');
-        scoreHtml = '<span class="score" style="color:' + col + '">' + sc0 + '&nbsp;–&nbsp;' + sc1 + '</span><span class="score-meta" style="color:' + col + '">' + label + '</span>';
+      // Gebruik koData als die beschikbaar is, anders statische score uit het match-object
+      const staticScore = m.score || null;
+      const staticPens  = m.pens  || null;
+      const staticWinner = m.winner || null;
+
+      if (koMatch || staticScore) {
+        const sc0 = koMatch ? koMatch.scoreHome : staticScore[0];
+        const sc1 = koMatch ? koMatch.scoreAway : staticScore[1];
+        const liveCol = koMatch?.inProgress && !koMatch?.done ? ' style="color:var(--live-col)"' : '';
+
+        let label = '';
+        const isDone = koMatch ? koMatch.done : true;
+        if (isDone) {
+          const isPens = (koMatch?.isPenalties) || staticPens;
+          const hp = koMatch?.homePens ?? (staticPens ? staticPens[0] : null);
+          const ap = koMatch?.awayPens ?? (staticPens ? staticPens[1] : null);
+          if (isPens && hp !== null) {
+            label = 'Na strafschoppen (' + hp + '–' + ap + ')';
+          } else if (koMatch?.isET) {
+            label = 'Na verlengingen';
+          } else {
+            label = 'Eindstand';
+          }
+        } else if (koMatch?.inProgress) {
+          label = koMatch.clock || 'Live';
+        }
+
+        const winnerName = koMatch?.winner || staticWinner;
+        const winnerBadge = isDone && winnerName
+          ? '<span class="ko-winner">✅ ' + flag(winnerName) + ' ' + winnerName + ' door</span>'
+          : '';
+
+        scoreHtml = '<span class="score"' + liveCol + '>' + sc0 + '&nbsp;–&nbsp;' + sc1 + '</span>' +
+          '<span class="score-meta"' + liveCol + '>' + label + '</span>' + winnerBadge;
       } else {
         scoreHtml = '<span class="score-pending">' + m.time.split(' ').slice(-1)[0] + '</span><span class="score-meta">' + m.time.replace(/\s\d+:\d+$/, '') + '</span>';
       }
