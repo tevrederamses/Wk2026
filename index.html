@@ -795,10 +795,28 @@ async function fetchScores() {
           const awayName = away.team?.displayName || '';
           const key = eventDate + '|' + homeName + '|' + awayName;
           const eventCity = comp.venue?.fullName || comp.venue?.address?.city || '';
+
+          const detail = (comp.status?.type?.detail || '').toLowerCase();
+          const isPenalties = detail.includes('pen') || detail.includes('shootout');
+          const isET = detail.includes('et') || detail.includes('extra') || detail.includes('aet');
+          const homePens = home.shootoutScore ?? null;
+          const awayPens = away.shootoutScore ?? null;
+
+          let winner = null;
+          if (done) {
+            if (isPenalties && homePens !== null && awayPens !== null) {
+              winner = homePens > awayPens ? homeName : awayName;
+            } else if (scoreHome !== scoreAway) {
+              winner = scoreHome > scoreAway ? homeName : awayName;
+            }
+          }
+
           koData[key] = {
             date: eventDate,
             home: homeName, away: awayName,
             scoreHome, scoreAway,
+            homePens, awayPens,
+            isPenalties, isET, winner,
             city: eventCity,
             clock: inProgress ? (comp.status?.displayClock || '') : '',
             done, inProgress
@@ -1304,12 +1322,12 @@ function renderKnockout() {
       {time:'ma 29 jun 19:00', a: '🇧🇷 Brazilië',    b: '🇯🇵 Japan',        city:'Houston',     score:[2,1], done:true, winner:'Brazilië'},
       {time:'ma 29 jun 22:30', a: '🇩🇪 Duitsland',   b: '🇵🇾 Paraguay',     city:'Boston',      score:[1,1], pens:[3,4], done:true, winner:'Paraguay'},
       {time:'di 30 jun 03:00', a: '🇳🇱 Nederland',   b: '🇲🇦 Marokko',      city:'Monterrey',   score:[1,1], pens:[2,3], done:true, winner:'Marokko'},
-      {time:'di 30 jun 19:00', a: '🇨🇮 Ivoorkust',   b: '🇳🇴 Noorwegen',    city:'Dallas',      score:[1,2], done:true, winner:'Noorwegen'},
+      {time:'di 30 jun 19:00', a: '🇨🇮 Ivoorkust',   b: '🇳🇴 Noorwegen',    city:'Dallas',      score:[0,1], done:true, winner:'Noorwegen'},
       {time:'di 30 jun 23:00', a: '🇫🇷 Frankrijk',   b: '🇸🇪 Zweden',        city:'New York',    score:[3,0], done:true, winner:'Frankrijk'},
       {time:'wo 1 jul 03:00',  a: '🇲🇽 Mexico',      b: '🇪🇨 Ecuador',       city:'Mexico City', score:[2,0], done:true, winner:'Mexico'},
       {time:'wo 1 jul 18:00',  a: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Engeland',  b: '🇨🇩 DR Congo',     city:'Atlanta',      score:[2,1], done:true, winner:'Engeland'},
-      {time:'wo 1 jul 22:00',  a: '🇧🇪 België',      b: '🇸🇳 Senegal',       city:'Seattle',     score:[0,1], done:true, winner:'Senegal'},
-      {time:'do 2 jul 02:00',  a: '🇺🇸 VS',          b: '🇧🇦 Bosnië',        city:'San Francisco'},
+      {time:'wo 1 jul 22:00',  a: '🇧🇪 België',      b: '🇸🇳 Senegal',       city:'Seattle',     score:[3,2], done:true, winner:'België'},
+      {time:'do 2 jul 02:00',  a: '🇺🇸 VS',          b: '🇧🇦 Bosnië',        city:'San Francisco', score:[2,0], done:true, winner:'VS'},
       {time:'do 2 jul 21:00',  a: '🇪🇸 Spanje',      b: '🇦🇹 Oostenrijk',    city:'Los Angeles'},
       {time:'vr 3 jul 01:00',  a: '🇵🇹 Portugal',    b: '🇭🇷 Kroatië',       city:'Toronto'},
       {time:'vr 3 jul 05:00',  a: '🇨🇭 Zwitserland', b: '🇩🇿 Algerije',      city:'Vancouver'},
@@ -1322,8 +1340,8 @@ function renderKnockout() {
       {time:'za 4 jul 23:00', teams:'🇵🇾 Paraguay vs 🇫🇷 Frankrijk',                      city:'Philadelphia'},
       {time:'zo 5 jul 22:00', teams:'🇧🇷 Brazilië vs 🇳🇴 Noorwegen',                     city:'New York'},
       {time:'zo 6 jul 02:00', teams:'🇲🇽 Mexico vs 🏴󠁧󠁢󠁥󠁮󠁧󠁿 Engeland',                      city:'Mexico City'},
-      {time:'ma 6 jul 21:00', teams:'🇸🇳 Senegal vs Winnaar Spanje–Oostenrijk',           city:'Dallas'},
-      {time:'ma 7 jul 02:00', teams:'Winnaar VS–Bosnië vs Winnaar Portugal–Kroatië',      city:'Seattle'},
+      {time:'ma 6 jul 21:00', teams:'🇧🇪 België vs Winnaar Spanje–Oostenrijk',             city:'Dallas'},
+      {time:'ma 7 jul 02:00', teams:'🇺🇸 VS vs Winnaar Portugal–Kroatië',                  city:'Seattle'},
       {time:'di 7 jul 18:00', teams:'Winnaar Argentinië–Kaapverdië vs Winnaar Australië–Egypte', city:'Atlanta'},
       {time:'di 7 jul 22:00', teams:'Winnaar Zwitserland–Algerije vs Winnaar Colombia–Ghana', city:'Vancouver'},
     ]},
@@ -1360,9 +1378,23 @@ function renderKnockout() {
                         m.teams?.includes('Nederland');
       card.className = 'bracket-match' + (m.final ? ' final-match' : '') + (isNLmatch ? ' nl-match' : '');
       // Bepaal teams en score
-      // Statische data heeft prioriteit; ESPN koData als fallback voor live/actuele data
-      const koMatch = null; // ESPN live data niet meer gebruikt; alles statisch
+      // Statische data heeft prioriteit voor gespeelde wedstrijden.
+      // Voor nog-te-spelen wedstrijden: ESPN koData als live/actuele bron.
       const hasStatic = Array.isArray(m.score);
+      const matchDate = getKODate(m.time);
+      let koMatch = null;
+      if (!hasStatic && matchDate && matchDate >= '2026-06-28') {
+        const candidates = Object.values(koData).filter(k => k.date === matchDate);
+        if (candidates.length > 0 && m.a) {
+          const rawA = normTeam(m.a.replace(/[^a-zA-Z\u00C0-\u024F\s]/g, '').trim().toLowerCase());
+          if (rawA.length > 1) {
+            koMatch = candidates.find(k => {
+              const h = normTeam(k.home);
+              return h === rawA || h.includes(rawA) || rawA.includes(h);
+            }) || null;
+          }
+        }
+      }
       const sc0 = hasStatic ? m.score[0] : (koMatch ? koMatch.scoreHome : null);
       const sc1 = hasStatic ? m.score[1] : (koMatch ? koMatch.scoreAway : null);
       const isDone = hasStatic ? m.done : (koMatch?.done || false);
@@ -1370,7 +1402,13 @@ function renderKnockout() {
       const hasPens = hasStatic ? Array.isArray(m.pens) : (koMatch?.isPenalties || false);
       const hp = hasStatic ? (m.pens?.[0] ?? null) : (koMatch?.homePens ?? null);
       const ap = hasStatic ? (m.pens?.[1] ?? null) : (koMatch?.awayPens ?? null);
-      const winnerName = hasStatic ? (m.winner || null) : (koMatch?.winner || null);
+      // Winner: voor ESPN-data vertaal Engelse naam terug via reverse NL_TO_EN lookup
+      let winnerName = hasStatic ? (m.winner || null) : null;
+      if (!hasStatic && koMatch?.winner) {
+        const enWinner = koMatch.winner.toLowerCase();
+        const nlWinner = Object.entries(NL_TO_EN).find(([nl, en]) => en === enWinner)?.[0];
+        winnerName = nlWinner || koMatch.winner;
+      }
       const liveClock = isLive ? (koMatch?.clock || 'Live') : '';
 
       // Teamnamen: gebruik m.a/m.b (nu vlag+naam emoji strings)
@@ -1557,7 +1595,7 @@ document.getElementById('filters').addEventListener('click', e => {
   if (!['standings', 'scorers', 'cards', 'knockout'].includes(activeFilter)) {
     setTimeout(scrollToRelevantMatch, 60);
   } else if (activeFilter === 'knockout') {
-    setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 60);
+    setTimeout(scrollToTodayKO, 60);
   }
 });
 
@@ -1586,8 +1624,27 @@ document.getElementById('schedule-container').addEventListener('click', e => {
 });
 
 
+function scrollToTodayKO() {
+  // Zoek de eerste kaart die nog niet gespeeld is (geen .score, wel .score-pending)
+  const cards = document.querySelectorAll('.bracket-match');
+  let target = null;
+  for (const card of cards) {
+    if (card.querySelector('.score-pending')) { target = card; break; }
+  }
+  // Fallback: eerste live kaart
+  if (!target) {
+    for (const card of cards) {
+      if (card.querySelector('.score[style*="live-col"]')) { target = card; break; }
+    }
+  }
+  if (!target) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+  const headerH = document.querySelector('header').offsetHeight;
+  const filterH = document.getElementById('filters').offsetHeight;
+  const top = target.getBoundingClientRect().top + window.scrollY - headerH - filterH - 16;
+  window.scrollTo({ top, behavior: 'smooth' });
+}
+
 function scrollToRelevantMatch() {
-  const today = todayStr();
   const sections = Array.from(document.querySelectorAll('.day-section'));
   if (!sections.length) return;
 
@@ -1610,7 +1667,7 @@ function scrollToRelevantMatch() {
   activeFilter = 'knockout';
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   document.querySelector('[data-filter="knockout"]')?.classList.add('active');
-  setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 600);
+  setTimeout(scrollToTodayKO, 600);
   setInterval(async () => {
     await Promise.all([fetchScores(), fetchTopScorers()]);
     render(activeFilter);
