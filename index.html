@@ -1686,13 +1686,20 @@ document.getElementById('schedule-container').addEventListener('click', e => {
 function scrollToTodayKO() {
   const cards = document.querySelectorAll('.bracket-match');
   let target = null;
+  // Eerst live wedstrijd zoeken
   for (const card of cards) {
-    if (card.querySelector('.score-pending')) { target = card; break; }
+    if (card.querySelector('.live-badge')) { target = card; break; }
+  }
+  // Dan eerste aanstaande wedstrijd
+  if (!target) {
+    for (const card of cards) {
+      if (card.querySelector('.score-pending')) { target = card; break; }
+    }
   }
   if (!target) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
   const headerH = document.querySelector('header').offsetHeight;
   const filterH = document.getElementById('filters').offsetHeight;
-  const top = target.getBoundingClientRect().top + window.scrollY - headerH - filterH - 16;
+  const top = target.getBoundingClientRect().top + window.scrollY - headerH - filterH - 80;
   window.scrollTo({ top, behavior: 'smooth' });
 }
 
@@ -1700,6 +1707,19 @@ function scrollToRelevantMatch() {
   const today = todayStr();
   const sections = Array.from(document.querySelectorAll('.day-section'));
   if (!sections.length) return;
+
+  // Scroll naar live wedstrijd als die er is
+  const liveCard = document.querySelector('.live-badge');
+  if (liveCard) {
+    const liveSection = liveCard.closest('.day-section');
+    if (liveSection) {
+      const headerH = document.querySelector('header').offsetHeight;
+      const filterH = document.getElementById('filters').offsetHeight;
+      const top = liveSection.getBoundingClientRect().top + window.scrollY - headerH - filterH - 80;
+      window.scrollTo({ top, behavior: 'smooth' });
+      return;
+    }
+  }
 
   // Pak de eerste sectie van vandaag of later; bestaat die niet
   // (bv. binnen een filter zonder wedstrijden vandaag/later), dan de laatste sectie.
@@ -1727,6 +1747,16 @@ function scrollToRelevantMatch() {
     try {
       await Promise.all([fetchScores(), fetchTopScorers()]);
       render(activeFilter);
+      // Scroll naar live wedstrijd bij elke refresh
+      if (document.querySelector('.live-badge')) {
+        setTimeout(() => {
+          if (['standings','scorers','cards','knockout'].includes(activeFilter)) {
+            scrollToTodayKO();
+          } else {
+            scrollToRelevantMatch();
+          }
+        }, 60);
+      }
     } catch(e) {
       if (lu) lu.textContent = 'Bijwerken mislukt - volgende poging over 1 minuut';
     }
