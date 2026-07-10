@@ -813,12 +813,7 @@ async function fetchScores() {
             scoreHome, scoreAway,
             city: eventCity,
             clock: inProgress ? (comp.status?.displayClock || '') : '',
-            done, inProgress,
-            winner: done ? (
-              scoreHome > scoreAway ? homeName :
-              scoreAway > scoreHome ? awayName :
-              (home.winner === true ? homeName : away.winner === true ? awayName : '')
-            ) : ''
+            done, inProgress
           };
         }
       }
@@ -865,8 +860,8 @@ async function fetchScores() {
     }
   }
   const now = new Date();
-  document.getElementById('last-updated').textContent =
-    'Uitslagen via ' + source + ' · bijgewerkt om ' + now.toLocaleTimeString('nl-NL', {hour:'2-digit', minute:'2-digit', second:'2-digit'}) + ' · automatisch elke 60 sec';
+document.getElementById('last-updated').textContent =
+    'Uitslagen via ' + source + ' · ' + now.toLocaleString('nl-NL');
 }
 
 // ─── TOPSCORERS ──────────────────────────────────────
@@ -1082,19 +1077,6 @@ function calcStandings() {
   return tables;
 }
 
-function getQualifiedTeams() {
-  const tables = calcStandings();
-  const qualified = new Set();
-  Object.entries(tables).forEach(([, rows]) => {
-    const allPlayed = rows.every(([, s]) => s.played === 3);
-    if (allPlayed) {
-      if (rows[0]) qualified.add(rows[0][0]);
-      if (rows[1]) qualified.add(rows[1][0]);
-    }
-  });
-  return qualified;
-}
-
 function renderStandings() {
   const container = document.getElementById('schedule-container');
   container.innerHTML = '';
@@ -1183,8 +1165,6 @@ function render(filter) {
   ph.textContent = '⚽ Groepsfase';
   container.appendChild(ph);
 
-  const qualified = getQualifiedTeams();
-
   const byDate = {};
   list.forEach(m => { (byDate[m.date] = byDate[m.date] || []).push(m); });
 
@@ -1229,14 +1209,12 @@ function render(filter) {
               : '<span class="score" style="color:var(--live-col)">LIVE</span><span class="score-meta">Poule ' + m.g + '</span>')
           : '<span class="score-pending">' + m.time + '</span><span class="score-meta">Poule ' + m.g + '</span>';
 
-      const homeThrough = qualified.has(m.home) ? ' ko-through' : '';
-      const awayThrough = qualified.has(m.away) ? ' ko-through' : '';
       card.innerHTML =
         liveBadge +
         roundLabel +
-        '<div class="team home' + homeThrough + '><span class="team-name">' + m.home + '</span><span class="flag">' + flag(m.home) + '</span></div>' +
+        '<div class="team home"><span class="team-name">' + m.home + '</span><span class="flag">' + flag(m.home) + '</span></div>' +
         '<div class="score-block">' + scoreHtml + '<span class="score-city">' + m.city + '</span>' + pouleLink + ytBtn + '</div>' +
-        '<div class="team away' + awayThrough + '><span class="flag">' + flag(m.away) + '</span><span class="team-name">' + m.away + '</span></div>';
+        '<div class="team away"><span class="flag">' + flag(m.away) + '</span><span class="team-name">' + m.away + '</span></div>';
 
       sec.appendChild(card);
     });
@@ -1344,87 +1322,43 @@ function renderKnockout() {
       {time:'wo 1 jul 18:00',  a:'🏴󠁧󠁢󠁥󠁮󠁧󠁿 Engeland',  b:'🇨🇩 DR Congo',    city:'Atlanta',       score:[2,1], done:true, winner:'Engeland'},
       {time:'wo 1 jul 22:00',  a:'🇧🇪 België',      b:'🇸🇳 Senegal',      city:'Seattle',       score:[3,2], done:true, winner:'België'},
       {time:'do 2 jul 02:00',  a:'🇺🇸 VS',          b:'🇧🇦 Bosnië',       city:'San Francisco', score:[2,0], done:true, winner:'VS'},
-      {time:'do 2 jul 21:00',  a:'🇪🇸 Spanje',      b:'🇦🇹 Oostenrijk',   city:'Los Angeles',   score:[3,0], done:true, winner:'Spanje'},
-      {time:'vr 3 jul 01:00',  a:'🇵🇹 Portugal',    b:'🇭🇷 Kroatië',      city:'Toronto',       score:[2,1], done:true, winner:'Portugal'},
-      {time:'vr 3 jul 05:00',  a:'🇨🇭 Zwitserland', b:'🇩🇿 Algerije',     city:'Vancouver',     score:[2,0], done:true, winner:'Zwitserland'},
-      {time:'vr 3 jul 20:00',  a:'🇦🇺 Australië',   b:'🇪🇬 Egypte',       city:'Dallas',        score:[1,1], pens:[2,4], done:true, winner:'Egypte'},
-      {time:'za 4 jul 00:00',  a:'🇦🇷 Argentinië',  b:'🇨🇻 Kaapverdië',   city:'Miami',         score:[3,2], done:true, winner:'Argentinië'},
-      {time:'za 4 jul 03:30',  a:'🇨🇴 Colombia',    b:'🇬🇭 Ghana',        city:'Kansas City',   score:[1,0], done:true, winner:'Colombia'},
+      {time:'do 2 jul 21:00',  a:'🇪🇸 Spanje',      b:'🇦🇹 Oostenrijk',   city:'Los Angeles', score:[3,0], done:true, winner:'Spanje'},
+      {time:'vr 3 jul 01:00',  a:'🇵🇹 Portugal',    b:'🇭🇷 Kroatië',      city:'Toronto', score:[2,1], done:true, winner:'Portugal'},
+      {time:'vr 3 jul 05:00',  a:'🇨🇭 Zwitserland', b:'🇩🇿 Algerije',     city:'Vancouver', score:[2,0], done:true, winner:'Zwitserland'},
+      {time:'vr 3 jul 20:00',  a:'🇦🇺 Australië',   b:'🇪🇬 Egypte',       city:'Dallas', score:[1,1], pens:[3,5], done:true, winner:'Egypte'},
+      {time:'za 4 jul 00:00',  a:'🇦🇷 Argentinië',  b:'🇨🇻 Kaapverdië',   city:'Miami', score:[3,2], done:true, winner:'Argentinië'},
+      {time:'za 4 jul 03:30',  a:'🇨🇴 Colombia',    b:'🇬🇭 Ghana',        city:'Kansas City', score:[1,0], done:true, winner:'Colombia'},
     ]},
     { title: 'Achtste finales · 4–7 jul', matches: [
-      {id:'AF1', time:'za 4 jul 19:00', a:'🇨🇦 Canada',      b:'🇲🇦 Marokko',    city:'Houston'},
-      {id:'AF2', time:'za 4 jul 23:00', a:'🇵🇾 Paraguay',    b:'🇫🇷 Frankrijk',  city:'Philadelphia'},
-      {id:'AF3', time:'zo 5 jul 22:00', a:'🇧🇷 Brazilië',    b:'🇳🇴 Noorwegen',  city:'New York'},
-      {id:'AF4', time:'ma 6 jul 02:00', a:'🇲🇽 Mexico',      b:'🏴󠁧󠁢󠁥󠁮󠁧󠁿 Engeland',  city:'Mexico City'},
-      {id:'AF5', time:'ma 6 jul 21:00', a:'🇵🇹 Portugal',    b:'🇪🇸 Spanje',     city:'Dallas'},
-      {id:'AF6', time:'di 7 jul 02:00', a:'🇺🇸 VS',          b:'🇧🇪 België',     city:'Seattle'},
-      {id:'AF7', time:'di 7 jul 18:00', a:'🇦🇷 Argentinië',  b:'🇪🇬 Egypte',     city:'Atlanta'},
-      {id:'AF8', time:'di 7 jul 22:00', a:'🇨🇭 Zwitserland', b:'🇨🇴 Colombia',   city:'Vancouver'},
+      {time:'za 4 jul 19:00', a:'🇨🇦 Canada',      b:'🇲🇦 Marokko',     city:'Houston',      score:[0,3], done:true, winner:'Marokko'},
+      {time:'za 4 jul 23:00', a:'🇵🇾 Paraguay',    b:'🇫🇷 Frankrijk',   city:'Philadelphia', score:[0,1], done:true, winner:'Frankrijk'},
+      {time:'zo 5 jul 22:00', a:'🇧🇷 Brazilië',    b:'🇳🇴 Noorwegen',   city:'New York',     score:[1,2], done:true, winner:'Noorwegen'},
+      {time:'zo 6 jul 02:00', a:'🇲🇽 Mexico',      b:'🏴󠁧󠁢󠁥󠁮󠁧󠁿 Engeland',  city:'Mexico City',  score:[2,3], done:true, winner:'Engeland'},
+      {time:'ma 6 jul 21:00', a:'🇵🇹 Portugal',    b:'🇪🇸 Spanje',      city:'Dallas',       score:[0,1], done:true, winner:'Spanje'},
+      {time:'ma 7 jul 02:00', a:'🇺🇸 VS',          b:'🇧🇪 België',      city:'Seattle',      score:[1,4], done:true, winner:'België'},
+      {time:'di 7 jul 18:00', a:'🇦🇷 Argentinië',  b:'🇪🇬 Egypte',      city:'Atlanta',      score:[3,2], done:true, winner:'Argentinië'},
+      {time:'di 7 jul 22:00', a:'🇨🇭 Zwitserland', b:'🇨🇴 Colombia',    city:'Vancouver',    score:[0,0], pens:[4,2], done:true, winner:'Zwitserland'},
     ]},
     { title: 'Kwartfinales · 9–12 jul', matches: [
-      {id:'KF1', time:'do 9 jul 22:00',  aFrom:'AF1', bFrom:'AF2', city:'Boston'},
-      {id:'KF2', time:'vr 10 jul 21:00', aFrom:'AF3', bFrom:'AF4', city:'Los Angeles'},
-      {id:'KF3', time:'za 11 jul 23:00', aFrom:'AF5', bFrom:'AF6', city:'Miami'},
-      {id:'KF4', time:'za 12 jul 03:00', aFrom:'AF7', bFrom:'AF8', city:'Kansas City'},
+      {time:'do 9 jul 22:00',  a:'🇫🇷 Frankrijk',   b:'🇲🇦 Marokko',    city:'Boston',       score:[2,0], done:true, winner:'Frankrijk'},
+      {time:'vr 10 jul 21:00', a:'🇪🇸 Spanje',      b:'🇧🇪 België',     city:'Los Angeles'},
+      {time:'za 11 jul 23:00', a:'🇳🇴 Noorwegen',   b:'🏴󠁧󠁢󠁥󠁮󠁧󠁿 Engeland', city:'Miami'},
+      {time:'za 12 jul 03:00', a:'🇦🇷 Argentinië',  b:'🇨🇭 Zwitserland',city:'Kansas City'},
     ]},
     { title: 'Halve finales · 14–15 jul', matches: [
-      {id:'HF1', time:'di 14 jul 21:00', aFrom:'KF1', bFrom:'KF2', city:'Dallas'},
-      {id:'HF2', time:'wo 15 jul 21:00', aFrom:'KF3', bFrom:'KF4', city:'Atlanta'},
+      {time:'di 14 jul 21:00', a:'🇫🇷 Frankrijk', b:'Winnaar Spanje–België',    city:'Dallas'},
+      {time:'wo 15 jul 21:00', a:'Winnaar Noorwegen–Engeland', b:'Winnaar Argentinië–Zwitserland', city:'Atlanta'},
     ]},
     { title: '3e Plaats · 18 jul', matches: [
-      {id:'3P', time:'za 18 jul 23:00', aFromLoser:'HF1', bFromLoser:'HF2', city:'Miami'},
+      {time:'za 18 jul 23:00', teams:'Verliezer HF1 vs Verliezer HF2', city:'Miami'},
     ]},
     { title: '🏆 FINALE · 19 jul', matches: [
-      {id:'FIN', time:'zo 19 jul 21:00', aFrom:'HF1', bFrom:'HF2', city:'MetLife Stadium, New York', final:true},
+      {time:'zo 19 jul 21:00', teams:'Winnaar HF1 vs Winnaar HF2', city:'MetLife Stadium, New York', final:true},
     ]},
   ];
 
   const grid = document.createElement('div');
   grid.className = 'bracket-grid';
-
-  // ── Bracket resolution helpers ───────────────────────────────────────────
-  function getMatchById(id) {
-    for (const r of rounds) for (const m of r.matches) if (m.id === id) return m;
-    return null;
-  }
-  function getTeamNameStr(t) {
-    if (!t) return '';
-    const parts = t.split(' ');
-    return parts[0]?.match(/\p{Emoji}/u) ? parts.slice(1).join(' ') : t;
-  }
-  function resolveTeam(fromId, wantLoser) {
-    const src = getMatchById(fromId);
-    if (!src) return null;
-    let srcA = src.a || (src.aFrom ? resolveTeam(src.aFrom, false) : src.aFromLoser ? resolveTeam(src.aFromLoser, true) : null);
-    let srcB = src.b || (src.bFrom ? resolveTeam(src.bFrom, false) : src.bFromLoser ? resolveTeam(src.bFromLoser, true) : null);
-    let winnerStr = null;
-    if (src.winner) {
-      const wn = src.winner.toLowerCase();
-      const an = getTeamNameStr(srcA).toLowerCase();
-      winnerStr = an === wn ? srcA : srcB;
-    }
-    if (!winnerStr && srcA && srcB) {
-      const rawA = normTeam(srcA.replace(/[^a-zA-Z\u00C0-\u024F\s]/g, '').trim().toLowerCase());
-      const rawB = normTeam(srcB.replace(/[^a-zA-Z\u00C0-\u024F\s]/g, '').trim().toLowerCase());
-      if (rawA.length > 1 && rawB.length > 1) {
-        const ko = Object.values(koData).find(k => {
-          const h = normTeam(k.home), aw = normTeam(k.away);
-          return (h === rawA || h.includes(rawA) || rawA.includes(h)) &&
-                 (aw === rawB || aw.includes(rawB) || rawB.includes(aw));
-        });
-        if (ko?.winner) {
-          const enW = ko.winner.toLowerCase();
-          const nlW = Object.entries(NL_TO_EN).find(([nl,en]) => en === enW)?.[0] || ko.winner;
-          const an = getTeamNameStr(srcA).toLowerCase();
-          winnerStr = an === nlW.toLowerCase() ? srcA : srcB;
-        }
-      }
-    }
-    if (!winnerStr) return null;
-    return wantLoser ? (winnerStr === srcA ? srcB : srcA) : winnerStr;
-  }
-  // ── End helpers ──────────────────────────────────────────────────────────
-
   rounds.forEach(round => {
     const col = document.createElement('div');
     col.className = 'bracket-round';
@@ -1432,57 +1366,47 @@ function renderKnockout() {
     const matchesDiv = document.createElement('div');
     matchesDiv.className = 'bracket-matches';
     round.matches.forEach(m => {
-      // Resolve aFrom/bFrom bracket references
-      let effectiveA = m.a || null;
-      let effectiveB = m.b || null;
-      if (m.aFrom) effectiveA = resolveTeam(m.aFrom, false) || null;
-      if (m.aFromLoser) effectiveA = resolveTeam(m.aFromLoser, true) || null;
-      if (m.bFrom) effectiveB = resolveTeam(m.bFrom, false) || null;
-      if (m.bFromLoser) effectiveB = resolveTeam(m.bFromLoser, true) || null;
-      // Placeholder text when winner not yet known
-      const aDisplay = effectiveA || (m.aFrom ? 'W. ' + m.aFrom : m.aFromLoser ? 'V. ' + m.aFromLoser : '?');
-      const bDisplay = effectiveB || (m.bFrom ? 'W. ' + m.bFrom : m.bFromLoser ? 'V. ' + m.bFromLoser : '?');
-
       const card = document.createElement('div');
-      const isNLmatch = effectiveA?.includes('Nederland') || effectiveB?.includes('Nederland') ||
-                        effectiveA?.includes('Netherlands') || effectiveB?.includes('Netherlands') ||
+      const isNLmatch = m.a?.includes('Nederland') || m.b?.includes('Nederland') ||
+                        m.a?.includes('Netherlands') || m.b?.includes('Netherlands') ||
                         m.teams?.includes('Nederland');
       card.className = 'bracket-match' + (m.final ? ' final-match' : '') + (isNLmatch ? ' nl-match' : '');
 
-      // Statische data heeft prioriteit; ESPN koData als fallback voor live
+      // ESPN koData heeft prioriteit (live + actueel); statische data als fallback
       const hasStatic = Array.isArray(m.score);
       const matchDate = getKODate(m.time);
       let koMatch = null;
-      if (!hasStatic && effectiveA && effectiveB) {
-        const rawA = normTeam(effectiveA.replace(/[^a-zA-Z\u00C0-\u024F\s]/g, '').trim().toLowerCase());
-        const rawB = normTeam(effectiveB.replace(/[^a-zA-Z\u00C0-\u024F\s]/g, '').trim().toLowerCase());
-        if (rawA.length > 1 && rawB.length > 1) {
-          koMatch = Object.values(koData).find(k => {
-            const h = normTeam(k.home);
-            const aw = normTeam(k.away);
-            const homeMatch = h === rawA || h.includes(rawA) || rawA.includes(h);
-            const awayMatch = aw === rawB || aw.includes(rawB) || rawB.includes(aw);
-            return homeMatch && awayMatch;
-          }) || null;
+      if (matchDate && matchDate >= '2026-06-28') {
+        const candidates = Object.values(koData).filter(k => k.date === matchDate);
+        if (candidates.length > 0 && m.a) {
+          const rawA = normTeam(m.a.replace(/[^a-zA-Z\u00C0-\u024F\s]/g, '').trim().toLowerCase());
+          if (rawA.length > 1) {
+            koMatch = candidates.find(k => {
+              const h = normTeam(k.home);
+              return h === rawA || h.includes(rawA) || rawA.includes(h);
+            }) || null;
+          }
         }
       }
 
-      const sc0 = hasStatic ? m.score[0] : (koMatch ? koMatch.scoreHome : null);
-      const sc1 = hasStatic ? m.score[1] : (koMatch ? koMatch.scoreAway : null);
-      const isDone = hasStatic ? m.done : (koMatch?.done || false);
-      const isLive = !hasStatic && koMatch?.inProgress && !koMatch?.done;
-      const hasPens = hasStatic ? Array.isArray(m.pens) : (koMatch?.isPenalties || false);
-      const hp = hasStatic ? (m.pens?.[0] ?? null) : (koMatch?.homePens ?? null);
-      const ap = hasStatic ? (m.pens?.[1] ?? null) : (koMatch?.awayPens ?? null);
+      // Gebruik ESPN als die data heeft, anders statische data
+      const useESPN = koMatch && (koMatch.done || koMatch.inProgress);
+      const sc0 = useESPN ? koMatch.scoreHome : (hasStatic ? m.score[0] : null);
+      const sc1 = useESPN ? koMatch.scoreAway : (hasStatic ? m.score[1] : null);
+      const isDone = useESPN ? koMatch.done : (hasStatic ? m.done : false);
+      const isLive = useESPN && koMatch.inProgress && !koMatch.done;
+      const hasPens = useESPN ? (koMatch?.isPenalties || false) : (hasStatic ? Array.isArray(m.pens) : false);
+      const hp = useESPN ? (koMatch?.homePens ?? null) : (hasStatic ? (m.pens?.[0] ?? null) : null);
+      const ap = useESPN ? (koMatch?.awayPens ?? null) : (hasStatic ? (m.pens?.[1] ?? null) : null);
       let winnerName = hasStatic ? (m.winner || null) : null;
-      if (!hasStatic && koMatch?.winner) {
+      if (useESPN && koMatch.winner) {
         const enW = koMatch.winner.toLowerCase();
         winnerName = Object.entries(NL_TO_EN).find(([nl,en]) => en === enW)?.[0] || koMatch.winner;
       }
       const liveClock = isLive ? (koMatch?.clock || 'Live') : '';
 
-      let homeTeam = aDisplay || '';
-      let awayTeam = bDisplay || '';
+      let homeTeam = m.a || '';
+      let awayTeam = m.b || '';
 
       const homeParts = homeTeam.split(' ');
       const awayParts = awayTeam.split(' ');
@@ -1509,8 +1433,8 @@ function renderKnockout() {
           '<span class="score-meta">' + m.time.replace(/\s\d+:\d+$/, '') + '</span>';
       }
 
-      const homeThrough = isDone && winnerName && koHome.toLowerCase() === winnerName.toLowerCase() ? ' ko-through' : '';
-      const awayThrough = isDone && winnerName && koAway.toLowerCase() === winnerName.toLowerCase() ? ' ko-through' : '';
+      const homeThrough = isDone && winnerName && koHome === winnerName ? ' ko-through' : '';
+      const awayThrough = isDone && winnerName && koAway === winnerName ? ' ko-through' : '';
       const koYtBtn = isDone
         ? '<a class="yt-btn" href="https://www.youtube.com/results?search_query=' + encodeURIComponent('NOS samenvatting ' + koHome + ' ' + koAway + ' WK 2026') + '" target="_blank" rel="noopener">📺 Samenvatting</a>'
         : '';
@@ -1686,20 +1610,13 @@ document.getElementById('schedule-container').addEventListener('click', e => {
 function scrollToTodayKO() {
   const cards = document.querySelectorAll('.bracket-match');
   let target = null;
-  // Eerst live wedstrijd zoeken
   for (const card of cards) {
-    if (card.querySelector('.live-badge')) { target = card; break; }
-  }
-  // Dan eerste aanstaande wedstrijd
-  if (!target) {
-    for (const card of cards) {
-      if (card.querySelector('.score-pending')) { target = card; break; }
-    }
+    if (card.querySelector('.score-pending')) { target = card; break; }
   }
   if (!target) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
   const headerH = document.querySelector('header').offsetHeight;
   const filterH = document.getElementById('filters').offsetHeight;
-  const top = target.getBoundingClientRect().top + window.scrollY - headerH - filterH - 80;
+  const top = target.getBoundingClientRect().top + window.scrollY - headerH - filterH - 16;
   window.scrollTo({ top, behavior: 'smooth' });
 }
 
@@ -1707,19 +1624,6 @@ function scrollToRelevantMatch() {
   const today = todayStr();
   const sections = Array.from(document.querySelectorAll('.day-section'));
   if (!sections.length) return;
-
-  // Scroll naar live wedstrijd als die er is
-  const liveCard = document.querySelector('.live-badge');
-  if (liveCard) {
-    const liveSection = liveCard.closest('.day-section');
-    if (liveSection) {
-      const headerH = document.querySelector('header').offsetHeight;
-      const filterH = document.getElementById('filters').offsetHeight;
-      const top = liveSection.getBoundingClientRect().top + window.scrollY - headerH - filterH - 80;
-      window.scrollTo({ top, behavior: 'smooth' });
-      return;
-    }
-  }
 
   // Pak de eerste sectie van vandaag of later; bestaat die niet
   // (bv. binnen een filter zonder wedstrijden vandaag/later), dan de laatste sectie.
@@ -1742,24 +1646,8 @@ function scrollToRelevantMatch() {
   document.querySelector('[data-filter="knockout"]')?.classList.add('active');
   setTimeout(scrollToTodayKO, 600);
   setInterval(async () => {
-    const lu = document.getElementById('last-updated');
-    if (lu) lu.textContent = 'Bezig met bijwerken...';
-    try {
-      await Promise.all([fetchScores(), fetchTopScorers()]);
-      render(activeFilter);
-      // Scroll naar live wedstrijd bij elke refresh
-      if (document.querySelector('.live-badge')) {
-        setTimeout(() => {
-          if (['standings','scorers','cards','knockout'].includes(activeFilter)) {
-            scrollToTodayKO();
-          } else {
-            scrollToRelevantMatch();
-          }
-        }, 60);
-      }
-    } catch(e) {
-      if (lu) lu.textContent = 'Bijwerken mislukt - volgende poging over 1 minuut';
-    }
+    await Promise.all([fetchScores(), fetchTopScorers()]);
+    render(activeFilter);
   }, 60 * 1000);
 })();
 </script>
