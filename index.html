@@ -714,6 +714,40 @@ let scoresInitialized = false; // na eerste load hoeven we alleen recente dagen 
 let liveMatchClock = {}; // speeltijd ('45+2, 1e helft' etc.) per live wedstrijd
 let cardsData = {}; // keyed by player id/name
 let koData = {}; // knock-out uitslagen: key = 'YYYYMMDD|home|away' → {home, away, score, clock, done}
+let ofData = {}; // openfootball uitslagen: key = matchnummer (73-104)
+
+// Haal knockout-uitslagen op via openfootball (dagelijks bijgewerkt, gratis, geen key)
+async function fetchKnockoutScores() {
+  try {
+    const r = await fetch('https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json?_=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) return;
+    const data = await r.json();
+    (data.matches || []).forEach(m => {
+      if (!m.num || !m.score) return; // alleen knockout (heeft num) en alleen als score bekend
+      const ft = m.score.ft;
+      const et = m.score.et;
+      const p  = m.score.p;
+      if (!ft) return;
+      // Bepaal winnaar
+      let sc0 = ft[0], sc1 = ft[1];
+      let isPens = false, hp = null, ap = null;
+      let winner = null;
+      if (p) {
+        isPens = true; hp = p[0]; ap = p[1];
+        winner = hp > ap ? m.team1 : m.team2;
+      } else if (et) {
+        sc0 = et[0]; sc1 = et[1];
+        winner = sc0 > sc1 ? m.team1 : m.team2;
+      } else {
+        winner = sc0 > sc1 ? m.team1 : m.team2;
+      }
+      ofData[m.num] = {
+        home: m.team1, away: m.team2,
+        sc0, sc1, isPens, hp, ap, winner, done: true
+      };
+    });
+  } catch(e) { /* stil falen */ }
+}
 
 const ESPN_MAP = {
   'usa': 'united states',
@@ -1312,48 +1346,48 @@ function renderKnockout() {
   // Gebaseerd op het officiële FIFA-schema
   const rounds = [
     { title: 'Ronde van 32 · 28 jun – 4 jul', matches: [
-      {time:'zo 28 jun 21:00', a:'🇿🇦 Zuid-Afrika', b:'🇨🇦 Canada',      city:'Los Angeles',   score:[0,1], done:true, winner:'Canada'},
-      {time:'ma 29 jun 19:00', a:'🇧🇷 Brazilië',    b:'🇯🇵 Japan',        city:'Houston',       score:[2,1], done:true, winner:'Brazilië'},
-      {time:'ma 29 jun 22:30', a:'🇩🇪 Duitsland',   b:'🇵🇾 Paraguay',     city:'Boston',        score:[1,1], pens:[3,4], done:true, winner:'Paraguay'},
-      {time:'di 30 jun 03:00', a:'🇳🇱 Nederland',   b:'🇲🇦 Marokko',      city:'Monterrey',     score:[1,1], pens:[2,3], done:true, winner:'Marokko'},
-      {time:'di 30 jun 19:00', a:'🇨🇮 Ivoorkust',   b:'🇳🇴 Noorwegen',    city:'Dallas',        score:[1,2], done:true, winner:'Noorwegen'},
-      {time:'di 30 jun 23:00', a:'🇫🇷 Frankrijk',   b:'🇸🇪 Zweden',       city:'New York',      score:[3,0], done:true, winner:'Frankrijk'},
-      {time:'wo 1 jul 03:00',  a:'🇲🇽 Mexico',      b:'🇪🇨 Ecuador',      city:'Mexico City',   score:[2,0], done:true, winner:'Mexico'},
-      {time:'wo 1 jul 18:00',  a:'🏴󠁧󠁢󠁥󠁮󠁧󠁿 Engeland',  b:'🇨🇩 DR Congo',    city:'Atlanta',       score:[2,1], done:true, winner:'Engeland'},
-      {time:'wo 1 jul 22:00',  a:'🇧🇪 België',      b:'🇸🇳 Senegal',      city:'Seattle',       score:[3,2], done:true, winner:'België'},
-      {time:'do 2 jul 02:00',  a:'🇺🇸 VS',          b:'🇧🇦 Bosnië',       city:'San Francisco', score:[2,0], done:true, winner:'VS'},
-      {time:'do 2 jul 21:00',  a:'🇪🇸 Spanje',      b:'🇦🇹 Oostenrijk',   city:'Los Angeles', score:[3,0], done:true, winner:'Spanje'},
-      {time:'vr 3 jul 01:00',  a:'🇵🇹 Portugal',    b:'🇭🇷 Kroatië',      city:'Toronto', score:[2,1], done:true, winner:'Portugal'},
-      {time:'vr 3 jul 05:00',  a:'🇨🇭 Zwitserland', b:'🇩🇿 Algerije',     city:'Vancouver', score:[2,0], done:true, winner:'Zwitserland'},
-      {time:'vr 3 jul 20:00',  a:'🇦🇺 Australië',   b:'🇪🇬 Egypte',       city:'Dallas', score:[1,1], pens:[3,5], done:true, winner:'Egypte'},
-      {time:'za 4 jul 00:00',  a:'🇦🇷 Argentinië',  b:'🇨🇻 Kaapverdië',   city:'Miami', score:[3,2], done:true, winner:'Argentinië'},
-      {time:'za 4 jul 03:30',  a:'🇨🇴 Colombia',    b:'🇬🇭 Ghana',        city:'Kansas City', score:[1,0], done:true, winner:'Colombia'},
+      {num:73, time:'zo 28 jun 21:00', a:'🇿🇦 Zuid-Afrika', b:'🇨🇦 Canada',      city:'Los Angeles',   score:[0,1], done:true, winner:'Canada'},
+      {num:76, time:'ma 29 jun 19:00', a:'🇧🇷 Brazilië',    b:'🇯🇵 Japan',        city:'Houston',       score:[2,1], done:true, winner:'Brazilië'},
+      {num:74, time:'ma 29 jun 22:30', a:'🇩🇪 Duitsland',   b:'🇵🇾 Paraguay',     city:'Boston',        score:[1,1], pens:[3,4], done:true, winner:'Paraguay'},
+      {num:75, time:'di 30 jun 03:00', a:'🇳🇱 Nederland',   b:'🇲🇦 Marokko',      city:'Monterrey',     score:[1,1], pens:[2,3], done:true, winner:'Marokko'},
+      {num:78, time:'di 30 jun 19:00', a:'🇨🇮 Ivoorkust',   b:'🇳🇴 Noorwegen',    city:'Dallas',        score:[1,2], done:true, winner:'Noorwegen'},
+      {num:77, time:'di 30 jun 23:00', a:'🇫🇷 Frankrijk',   b:'🇸🇪 Zweden',       city:'New York',      score:[3,0], done:true, winner:'Frankrijk'},
+      {num:79, time:'wo 1 jul 03:00',  a:'🇲🇽 Mexico',      b:'🇪🇨 Ecuador',      city:'Mexico City',   score:[2,0], done:true, winner:'Mexico'},
+      {num:80, time:'wo 1 jul 18:00',  a:'🏴󠁧󠁢󠁥󠁮󠁧󠁿 Engeland',  b:'🇨🇩 DR Congo',    city:'Atlanta',       score:[2,1], done:true, winner:'Engeland'},
+      {num:82, time:'wo 1 jul 22:00',  a:'🇧🇪 België',      b:'🇸🇳 Senegal',      city:'Seattle',       score:[3,2], done:true, winner:'België'},
+      {num:81, time:'do 2 jul 02:00',  a:'🇺🇸 VS',          b:'🇧🇦 Bosnië',       city:'San Francisco', score:[2,0], done:true, winner:'VS'},
+      {num:84, time:'do 2 jul 21:00',  a:'🇪🇸 Spanje',      b:'🇦🇹 Oostenrijk',   city:'Los Angeles', score:[3,0], done:true, winner:'Spanje'},
+      {num:83, time:'vr 3 jul 01:00',  a:'🇵🇹 Portugal',    b:'🇭🇷 Kroatië',      city:'Toronto', score:[2,1], done:true, winner:'Portugal'},
+      {num:85, time:'vr 3 jul 05:00',  a:'🇨🇭 Zwitserland', b:'🇩🇿 Algerije',     city:'Vancouver', score:[2,0], done:true, winner:'Zwitserland'},
+      {num:88, time:'vr 3 jul 20:00',  a:'🇦🇺 Australië',   b:'🇪🇬 Egypte',       city:'Dallas', score:[1,1], pens:[3,5], done:true, winner:'Egypte'},
+      {num:86, time:'za 4 jul 00:00',  a:'🇦🇷 Argentinië',  b:'🇨🇻 Kaapverdië',   city:'Miami', score:[3,2], done:true, winner:'Argentinië'},
+      {num:87, time:'za 4 jul 03:30',  a:'🇨🇴 Colombia',    b:'🇬🇭 Ghana',        city:'Kansas City', score:[1,0], done:true, winner:'Colombia'},
     ]},
     { title: 'Achtste finales · 4–7 jul', matches: [
-      {time:'za 4 jul 19:00', a:'🇨🇦 Canada',      b:'🇲🇦 Marokko',     city:'Houston',      score:[0,3], done:true, winner:'Marokko'},
-      {time:'za 4 jul 23:00', a:'🇵🇾 Paraguay',    b:'🇫🇷 Frankrijk',   city:'Philadelphia', score:[0,1], done:true, winner:'Frankrijk'},
-      {time:'zo 5 jul 22:00', a:'🇧🇷 Brazilië',    b:'🇳🇴 Noorwegen',   city:'New York',     score:[1,2], done:true, winner:'Noorwegen'},
-      {time:'zo 6 jul 02:00', a:'🇲🇽 Mexico',      b:'🏴󠁧󠁢󠁥󠁮󠁧󠁿 Engeland',  city:'Mexico City',  score:[2,3], done:true, winner:'Engeland'},
-      {time:'ma 6 jul 21:00', a:'🇵🇹 Portugal',    b:'🇪🇸 Spanje',      city:'Dallas',       score:[0,1], done:true, winner:'Spanje'},
-      {time:'ma 7 jul 02:00', a:'🇺🇸 VS',          b:'🇧🇪 België',      city:'Seattle',      score:[1,4], done:true, winner:'België'},
-      {time:'di 7 jul 18:00', a:'🇦🇷 Argentinië',  b:'🇪🇬 Egypte',      city:'Atlanta',      score:[3,2], done:true, winner:'Argentinië'},
-      {time:'di 7 jul 22:00', a:'🇨🇭 Zwitserland', b:'🇨🇴 Colombia',    city:'Vancouver',    score:[0,0], pens:[4,2], done:true, winner:'Zwitserland'},
+      {num:89, time:'za 4 jul 19:00', a:'🇨🇦 Canada',      b:'🇲🇦 Marokko',     city:'Houston',      score:[0,3], done:true, winner:'Marokko'},
+      {num:90, time:'za 4 jul 23:00', a:'🇵🇾 Paraguay',    b:'🇫🇷 Frankrijk',   city:'Philadelphia', score:[0,1], done:true, winner:'Frankrijk'},
+      {num:91, time:'zo 5 jul 22:00', a:'🇧🇷 Brazilië',    b:'🇳🇴 Noorwegen',   city:'New York',     score:[1,2], done:true, winner:'Noorwegen'},
+      {num:92, time:'zo 6 jul 02:00', a:'🇲🇽 Mexico',      b:'🏴󠁧󠁢󠁥󠁮󠁧󠁿 Engeland',  city:'Mexico City',  score:[2,3], done:true, winner:'Engeland'},
+      {num:93, time:'ma 6 jul 21:00', a:'🇵🇹 Portugal',    b:'🇪🇸 Spanje',      city:'Dallas',       score:[0,1], done:true, winner:'Spanje'},
+      {num:94, time:'ma 7 jul 02:00', a:'🇺🇸 VS',          b:'🇧🇪 België',      city:'Seattle',      score:[1,4], done:true, winner:'België'},
+      {num:95, time:'di 7 jul 18:00', a:'🇦🇷 Argentinië',  b:'🇪🇬 Egypte',      city:'Atlanta',      score:[3,2], done:true, winner:'Argentinië'},
+      {num:96, time:'di 7 jul 22:00', a:'🇨🇭 Zwitserland', b:'🇨🇴 Colombia',    city:'Vancouver',    score:[0,0], pens:[4,2], done:true, winner:'Zwitserland'},
     ]},
     { title: 'Kwartfinales · 9–12 jul', matches: [
-      {time:'do 9 jul 22:00',  a:'🇫🇷 Frankrijk',   b:'🇲🇦 Marokko',    city:'Boston',       score:[2,0], done:true, winner:'Frankrijk'},
-      {time:'vr 10 jul 21:00', a:'🇪🇸 Spanje',      b:'🇧🇪 België',     city:'Los Angeles'},
-      {time:'za 11 jul 23:00', a:'🇳🇴 Noorwegen',   b:'🏴󠁧󠁢󠁥󠁮󠁧󠁿 Engeland', city:'Miami'},
-      {time:'za 12 jul 03:00', a:'🇦🇷 Argentinië',  b:'🇨🇭 Zwitserland',city:'Kansas City'},
+      {num:97, time:'do 9 jul 22:00',  a:'🇫🇷 Frankrijk',   b:'🇲🇦 Marokko',    city:'Boston',       score:[2,0], done:true, winner:'Frankrijk'},
+      {num:98, time:'vr 10 jul 21:00', a:'🇪🇸 Spanje',      b:'🇧🇪 België',     city:'Los Angeles', score:[2,1], done:true, winner:'Spanje'},
+      {num:99, time:'za 11 jul 23:00', a:'🇳🇴 Noorwegen',   b:'🏴󠁧󠁢󠁥󠁮󠁧󠁿 Engeland', city:'Miami', score:[1,1], et:[1,2], done:true, winner:'Engeland'},
+      {num:100, time:'za 12 jul 03:00', a:'🇦🇷 Argentinië',  b:'🇨🇭 Zwitserland',city:'Kansas City', score:[1,1], et:[3,1], done:true, winner:'Argentinië'},
     ]},
     { title: 'Halve finales · 14–15 jul', matches: [
-      {time:'di 14 jul 21:00', a:'🇫🇷 Frankrijk', b:'Winnaar Spanje–België',    city:'Dallas'},
-      {time:'wo 15 jul 21:00', a:'Winnaar Noorwegen–Engeland', b:'Winnaar Argentinië–Zwitserland', city:'Atlanta'},
+      {num:101, time:'di 14 jul 21:00', a:'🇫🇷 Frankrijk', b:'🇪🇸 Spanje',               city:'Dallas'},
+      {num:102, time:'wo 15 jul 21:00', a:'🏴󠁧󠁢󠁥󠁮󠁧󠁿 Engeland',              b:'🇦🇷 Argentinië',              city:'Atlanta'},
     ]},
     { title: '3e Plaats · 18 jul', matches: [
-      {time:'za 18 jul 23:00', teams:'Verliezer HF1 vs Verliezer HF2', city:'Miami'},
+      {num:103, time:'za 18 jul 23:00', a:'Verliezer HF1', b:'Verliezer HF2', city:'Miami'},
     ]},
     { title: '🏆 FINALE · 19 jul', matches: [
-      {time:'zo 19 jul 21:00', teams:'Winnaar HF1 vs Winnaar HF2', city:'MetLife Stadium, New York', final:true},
+      {num:104, time:'zo 19 jul 21:00', a:'Winnaar HF1', b:'Winnaar HF2', city:'MetLife Stadium, New York', final:true},
     ]},
   ];
 
@@ -1374,9 +1408,15 @@ function renderKnockout() {
 
       // ESPN koData heeft prioriteit (live + actueel); statische data als fallback
       const hasStatic = Array.isArray(m.score);
+
+      // ofData (openfootball) heeft prioriteit — betrouwbaarder dan ESPN voor knockout
+      const of = m.num ? ofData[m.num] : null;
+      const useOF = of && of.done;
+
+      // ESPN koData als live-fallback (voor wedstrijden die net bezig zijn)
       const matchDate = getKODate(m.time);
       let koMatch = null;
-      if (matchDate && matchDate >= '2026-06-28') {
+      if (!useOF && matchDate && matchDate >= '2026-06-28') {
         const candidates = Object.values(koData).filter(k => k.date === matchDate);
         if (candidates.length > 0 && m.a) {
           const rawA = normTeam(m.a.replace(/[^a-zA-Z\u00C0-\u024F\s]/g, '').trim().toLowerCase());
@@ -1388,25 +1428,35 @@ function renderKnockout() {
           }
         }
       }
+      const useESPN = !useOF && koMatch && (koMatch.done || koMatch.inProgress);
 
-      // Gebruik ESPN als die data heeft, anders statische data
-      const useESPN = koMatch && (koMatch.done || koMatch.inProgress);
-      const sc0 = useESPN ? koMatch.scoreHome : (hasStatic ? m.score[0] : null);
-      const sc1 = useESPN ? koMatch.scoreAway : (hasStatic ? m.score[1] : null);
-      const isDone = useESPN ? koMatch.done : (hasStatic ? m.done : false);
-      const isLive = useESPN && koMatch.inProgress && !koMatch.done;
-      const hasPens = useESPN ? (koMatch?.isPenalties || false) : (hasStatic ? Array.isArray(m.pens) : false);
-      const hp = useESPN ? (koMatch?.homePens ?? null) : (hasStatic ? (m.pens?.[0] ?? null) : null);
-      const ap = useESPN ? (koMatch?.awayPens ?? null) : (hasStatic ? (m.pens?.[1] ?? null) : null);
-      let winnerName = hasStatic ? (m.winner || null) : null;
-      if (useESPN && koMatch.winner) {
+      // Selecteer databron: openfootball > ESPN > statisch
+      const sc0 = useOF ? of.sc0 : (useESPN ? koMatch.scoreHome : (hasStatic ? m.score[0] : null));
+      const sc1 = useOF ? of.sc1 : (useESPN ? koMatch.scoreAway : (hasStatic ? m.score[1] : null));
+      const isDone = useOF ? true : (useESPN ? koMatch.done : (hasStatic ? m.done : false));
+      const isLive = !useOF && useESPN && koMatch.inProgress && !koMatch.done;
+      const hasPens = useOF ? of.isPens : (useESPN ? (koMatch?.isPenalties || false) : (hasStatic ? Array.isArray(m.pens) : false));
+      const hp = useOF ? of.hp : (useESPN ? (koMatch?.homePens ?? null) : (hasStatic ? (m.pens?.[0] ?? null) : null));
+      const ap = useOF ? of.ap : (useESPN ? (koMatch?.awayPens ?? null) : (hasStatic ? (m.pens?.[1] ?? null) : null));
+      const liveClock = isLive ? (koMatch?.clock || 'Live') : '';
+
+      // Winnaar bepalen
+      let winnerName = useOF ? of.winner : (hasStatic ? (m.winner || null) : null);
+      if (!winnerName && useESPN && koMatch.winner) {
         const enW = koMatch.winner.toLowerCase();
         winnerName = Object.entries(NL_TO_EN).find(([nl,en]) => en === enW)?.[0] || koMatch.winner;
       }
-      const liveClock = isLive ? (koMatch?.clock || 'Live') : '';
 
+      // Teamnamen: gebruik openfootball teamnamen als beschikbaar
       let homeTeam = m.a || '';
       let awayTeam = m.b || '';
+      if (useOF && of.home && of.away) {
+        // Bouw emoji+naam op basis van openfootball naam
+        const hFlag = flag(of.home) || '🏳️';
+        const aFlag = flag(of.away) || '🏳️';
+        homeTeam = hFlag + ' ' + of.home;
+        awayTeam = aFlag + ' ' + of.away;
+      }
 
       const homeParts = homeTeam.split(' ');
       const awayParts = awayTeam.split(' ');
@@ -1638,7 +1688,7 @@ function scrollToRelevantMatch() {
 }
 
 (async () => {
-  await Promise.all([fetchScores(), fetchTopScorers()]);
+  await Promise.all([fetchScores(), fetchTopScorers(), fetchKnockoutScores()]);
   startCountdown();
   render('knockout');
   activeFilter = 'knockout';
@@ -1646,7 +1696,7 @@ function scrollToRelevantMatch() {
   document.querySelector('[data-filter="knockout"]')?.classList.add('active');
   setTimeout(scrollToTodayKO, 600);
   setInterval(async () => {
-    await Promise.all([fetchScores(), fetchTopScorers()]);
+    await Promise.all([fetchScores(), fetchTopScorers(), fetchKnockoutScores()]);
     render(activeFilter);
   }, 60 * 1000);
 })();
